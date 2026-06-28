@@ -1,7 +1,25 @@
-# Curso jQuery — EscuelaIT
+# jQuery SPA with Method Load from jQuery — v4
 
-Proyecto de prácticas del curso **jQuery** impartido por Miguel Ángel Alvarez en [EscuelaIT](https://escuela.it).  
-Implementado como una **SPA** (Single Page Application) con enrutamiento propio, servidor de desarrollo con live reload y pipeline de build con Gulp.
+Demo y referencia del plugin **`jquery.spa-with-method-load-from-jquery.js`**: una SPA sin frameworks que carga fragmentos HTML con **`jQuery.load()`**, enruta con un manifiesto ligero, integra **jQuery UI** bajo demanda y expone un pipeline de desarrollo con Gulp, Shiki y servidores Express.
+
+**Autor:** Antonio Francisco Cutillas García — [AntonyDev](https://antonydev.tech)  
+**Licencia:** ISC
+
+---
+
+## Características del plugin
+
+| Área | Detalle |
+|---|---|
+| Carga de vistas | `$(selector).load(url)` secuencial sobre `route.components` y `route.pagesComponents` |
+| Rutas | Lazy loading con `import()` + caché en `Map`; manifiesto `{ id, path, file }` |
+| Navegación | `history.pushState` / `popstate`; enlaces `a[data-id]` y `a[data-route]`; `routeFile` en el state |
+| Metadatos | `pageTitle`, `headerTitle`, `favicon`, CSS y JS por ruta |
+| jQuery UI | `libs` + `libLoader`; draggable, navbar, cambio de themes dinámico |
+| Extras | View Transitions API, Markdown Shiki, reescritura de URLs inyectadas, 404 integrada |
+| Eventos | `spa:route-loaded`, `spa:first-route-loaded`, `spa:route-load-error` |
+
+Documentación ampliada en la página de inicio del proyecto (`src/pages-components/home.html`).
 
 ---
 
@@ -9,14 +27,14 @@ Implementado como una **SPA** (Single Page Application) con enrutamiento propio,
 
 | Herramienta | Versión | Rol |
 |---|---|---|
-| jQuery | 4.x | Biblioteca principal |
-| jQuery UI | 1.14.x | Widgets e interacciones |
+| jQuery | 4.x | Biblioteca principal y método `.load()` |
+| jQuery UI | 1.14.x | Widgets e interacciones (carga bajo demanda) |
 | Sass (Dart) | 1.x | Preprocesador CSS |
-| Gulp 5 | 5.x | Pipeline de build |
-| Express 5 | 5.x | Servidor dev y preview |
+| Gulp | 5.x | Pipeline de build (`src/` → `app/` → `dist/`) |
+| Express | 5.x | Servidor de desarrollo y preview |
 | BrowserSync | 3.x | Live reload |
-| php-cgi | 8.3 | Ejecución de servicios PHP |
-| sharp | 0.34.x | Conversión/optimización de imágenes |
+| Shiki | 4.x | Resaltado de código (Markdown Shiki) |
+| sharp | 0.34.x | Optimización de imágenes |
 | pnpm | 9.x | Gestor de paquetes |
 | Node.js | ESM | Runtime |
 
@@ -26,7 +44,7 @@ Implementado como una **SPA** (Single Page Application) con enrutamiento propio,
 
 - **Node.js** ≥ 18
 - **pnpm** ≥ 9 — `npm install -g pnpm`
-- **php-cgi** (para los ejercicios AJAX con PHP) — `sudo apt install php8.3-cgi`
+- **php-cgi** *(opcional)* — solo si usas los servicios PHP de ejemplo en `src/services/`
 
 ---
 
@@ -42,17 +60,20 @@ pnpm install
 
 | Comando | Descripción |
 |---|---|
-| `pnpm run dev` | Inicia Gulp (watch + compilación) y el servidor de desarrollo con live reload |
-| `pnpm run build` | Genera el build de producción en `dist/` |
-| `pnpm run preview` | Sirve el build de producción en `http://localhost:4173` |
-| `pnpm run stop:dev` | Detiene el servidor de desarrollo de forma limpia |
+| `pnpm dev` | Gulp watch + servidor de desarrollo con live reload |
+| `pnpm dev:watch` | Solo Gulp watch (`src/` → `app/`) |
+| `pnpm serve:dev` | Solo servidor Express + BrowserSync |
+| `pnpm stop:dev` | Detiene el servidor de desarrollo |
+| `pnpm build` | Build de producción en `dist/` |
+| `pnpm preview` | Sirve `dist/` (puerto 4173 por defecto) |
+| `pnpm code-highlight` | Regenera bloques HTML con Shiki |
 
-### Variables de entorno opcionales (`.env`)
+### Variables de entorno (`.env`)
 
 ```dotenv
 DEV_SERVER_PORT=3000        # Puerto público del servidor dev (BrowserSync)
 PREVIEW_SERVER_PORT=4173    # Puerto del servidor preview
-CHOKIDAR_USEPOLLING=false   # true en entornos WSL/Docker con problemas de watch
+CHOKIDAR_USEPOLLING=false   # true en WSL/Docker si el watch falla
 CHOKIDAR_INTERVAL=250       # Intervalo de polling en ms
 ```
 
@@ -60,120 +81,124 @@ CHOKIDAR_INTERVAL=250       # Intervalo de polling en ms
 
 ## URL base
 
-El proyecto se sirve bajo el prefijo:
+El proyecto se sirve bajo:
 
 ```
-/escuelait/curso-jquery-escuelait/
+/mis-plugins-spa/jquery-spa-with-method-load-from-jquery-v4/
 ```
 
-Acceso en desarrollo: [http://localhost:3000/escuelait/curso-jquery-escuelait/](http://localhost:3000/escuelait/curso-jquery-escuelait/)
+Desarrollo: [http://localhost:3000/mis-plugins-spa/jquery-spa-with-method-load-from-jquery-v4/](http://localhost:3000/mis-plugins-spa/jquery-spa-with-method-load-from-jquery-v4/)
+
+La constante `base` en `src/main.js` debe coincidir con el prefijo de despliegue.
+
+---
+
+## Uso del plugin
+
+El plugin se registra en jQuery y se inicializa sobre el contenedor raíz de la SPA:
+
+```javascript
+import { spaWithMethodLoadFromJQueryPlugins } from './plugins/spa-with-method-load-from-jquery/v4/jquery.spa-with-method-load-from-jquery.js';
+
+spaWithMethodLoadFromJQueryPlugins();
+
+$('#layout').spaWithMethodLoadFromJQuery({
+    routeManifest,
+    routeModulesBase: `${base}/app/routes`,
+    base,
+    draggable: true,
+    libLoader: loadJQueryUILib,
+});
+```
+
+En este proyecto, `src/spa/spa.js` concentra esa configuración; `src/main.js` carga jQuery, registra el plugin y arranca la SPA.
+
+### Opciones de configuración
+
+| Opción | Descripción |
+|---|---|
+| `routeManifest` | Array `{ id, path, file }` para lazy loading |
+| `routeModulesBase` | Ruta base de los módulos de ruta (`import()`) |
+| `base` | Prefijo URL de la aplicación |
+| `draggable` | Habilita `.draggable()` en elementos con clase `.draggable` |
+| `libLoader` | Función async `(name) => void` para cargar widgets jQuery UI |
+
+### Propiedades de cada ruta (`Route`)
+
+`id`, `path`, `pageTitle`, `headerTitle`, `favicon`, `components`, `pagesComponents`, `styles`, `scripts`, `libs`, `MarkdownShikiHtml`.
+
+---
+
+## Rutas incluidas
+
+| ID | Path |
+|---|---|
+| `home` | `/` |
+| `htmlPage` | `/stack/html-page` |
+| `cssPage` | `/stack/css-page` |
+| `javascriptPage` | `/stack/javascript-page` |
+| `jqueryPage` | `/stack/jquery-page` |
+| `jqueryUiPage` | `/stack/jquery-ui-page` |
+| `reactPage` | `/stack/react-page` |
+| `astroPage` | `/stack/astro-page` |
+| `404NotFoundPage` | `/404` |
 
 ---
 
 ## Estructura del proyecto
 
 ```
-curso-jquery-escuelait/
+jquery-spa-with-method-load-from-jquery-v4/
 │
-├── src/                        # Código fuente (origen de verdad)
-│   ├── main.js                 # Punto de entrada de la SPA
-│   ├── pages/                  # Fragmentos HTML por clase
-│   │   ├── 00-home.html
-│   │   ├── clase-01/ … clase-16/
-│   │   └── 404/
-│   ├── scripts/                # Scripts JS por clase
-│   │   ├── clase-03/ … clase-16/
-│   │   ├── register-service-worker.js
-│   │   └── tooltips.js
-│   ├── scss/                   # Estilos SCSS
-│   ├── components/             # Componentes HTML reutilizables
-│   ├── routes/                 # Definición de rutas SPA
-│   ├── spa/                    # Motor de la SPA (método load)
-│   ├── services/               # Servicios PHP (AJAX)
-│   │   ├── contenido-load.php
-│   │   ├── contenido-get-ajax.php
-│   │   └── contenido-get-ajax-dato.php
-│   ├── effects/                # Efectos de carga/transición
-│   ├── libs/                   # Librerías locales (jQuery, jQuery UI)
-│   └── plugins/                # Plugins jQuery (easing, animate-colors…)
+├── src/                              # Código fuente (origen de verdad)
+│   ├── main.js                       # Entrada: jQuery, plugin y SPA
+│   ├── spa/spa.js                    # Configuración del plugin por proyecto
+│   ├── plugins/spa-with-method-load-from-jquery/v4/
+│   │   └── jquery.spa-with-method-load-from-jquery.js
+│   ├── routes/                       # Manifiesto y módulos de ruta
+│   ├── pages/                        # Shell HTML por vista
+│   ├── pages-components/             # Contenido inyectado en cada vista
+│   ├── components/                   # Layout (header, navbar, footer…)
+│   ├── scripts/                      # JS por página
+│   ├── scss/                         # Estilos SCSS
+│   ├── effects/effect-loading-page.js
+│   ├── libs/                         # jQuery, jQuery UI, loaders ESM
+│   ├── markdown-shiki/               # HTML generado con Shiki
+│   └── services/                     # PHP de ejemplo (opcional)
 │
-├── app/                        # Build intermedio (dev, generado por Gulp)
-├── dist/                       # Build de producción (generado por Gulp)
-│
-├── assets/
-│   ├── img/                    # Imágenes optimizadas (PNG + AVIF responsive)
-│   ├── fonts/                  # Fuentes locales
-│   └── favicon/
-│
-├── server/
-│   ├── dev-server.js           # Express + BrowserSync + php-cgi (desarrollo)
-│   ├── preview-server.js       # Express + php-cgi (previsualización del build)
-│   └── stop-dev-server.js      # Script para parar el servidor de desarrollo
-│
-├── types/                      # Tipos JSDoc del proyecto
-├── gulpfile.js                 # Tareas Gulp (sass, minify, copy, watch…)
-├── jsconfig.json               # Configuración TypeScript/JSDoc
-├── package.json
-└── pnpm-lock.yaml
+├── app/                              # Artefacto de desarrollo (Gulp)
+├── dist/                             # Build de producción minificado
+├── assets/                           # Imágenes, fuentes, favicons
+├── types/                            # Tipos JSDoc
+├── server/                           # dev-server, preview-server
+├── gulpfile.js
+└── generate-markdown-shiki.js
 ```
 
 ---
 
-## Contenido del curso
+## Pipeline de build
 
-| Clase | Tema |
-|---|---|
-| 01 | Introducción a jQuery |
-| 02 | Selectores básicos |
-| 03 | Eventos |
-| 04 | DOM — Manipulación |
-| 05 | Efectos y animaciones |
-| 06 | Ejemplos combinados |
-| 07 | Atributos, propiedades, `.html()`, `.text()`, `.data()`, `.each()` |
-| 08 | Contexto, selectores de jerarquía, traversing |
-| 09 | Ejercicios prácticos (`this`, fecha, eventos) |
-| 10 | Inserción DOM — `.append()`, `.prepend()`, `.after()`, `.before()` |
-| 11 | Formularios y validación |
-| 12 | Animaciones avanzadas |
-| 13 | jQuery UI — Draggable, Tooltip |
-| 14 | Plugins personalizados |
-| 15 | SPA con `.load()` |
-| 16 | AJAX — Interfaz de alto nivel (`$.get`, `$.ajax`, PHP) |
+1. **`pnpm dev`** — Gulp copia y compila `src/` → `app/`; BrowserSync recarga al cambiar archivos.
+2. **`pnpm code-highlight`** — Genera bloques Shiki en `app/markdown-shiki/` a partir de las rutas.
+3. **`pnpm build`** — Limpia `dist/`, regenera `app/` y minifica HTML, CSS y JS hacia `dist/`.
+4. **`pnpm preview`** — Sirve `dist/` con fallback SPA para validar el build.
 
 ---
 
-## Imágenes responsive
-
-Las imágenes ilustrativas usan `<picture>` + `srcset` con formato AVIF para optimizar el rendimiento:
-
-```html
-<picture>
-  <source
-    type="image/avif"
-    srcset="imagen-280x200.avif 280w, imagen-560x400.avif 560w"
-    sizes="(max-width: 600px) 280px, 560px"
-  >
-  <img src="imagen-original.png" alt="…" width="640" height="480" loading="lazy" decoding="async">
-</picture>
-```
-
-Los AVIF se generan con **sharp**. El PNG actúa de fallback para navegadores sin soporte AVIF.
-
----
-
-## Despliegue (producción — Nginx)
+## Despliegue (Nginx)
 
 ```bash
 pnpm run build
-# Copiar dist/ a /var/www/jquery.antonydev.tech/escuelait/curso-jquery-escuelait/
+# Copiar dist/ al directorio público del servidor
 ```
 
-Bloque Nginx requerido para el soporte PHP con `alias`:
+Ejemplo de bloque Nginx con fallback SPA:
 
 ```nginx
-location ^~ /escuelait/curso-jquery-escuelait/ {
-    alias /var/www/jquery.antonydev.tech/escuelait/curso-jquery-escuelait/;
-    try_files $uri $uri/ /escuelait/curso-jquery-escuelait/index.html;
+location ^~ /mis-plugins-spa/jquery-spa-with-method-load-from-jquery-v4/ {
+    alias /var/www/jquery.antonydev.tech/mis-plugins-spa/jquery-spa-with-method-load-from-jquery-v4/;
+    try_files $uri $uri/ /mis-plugins-spa/jquery-spa-with-method-load-from-jquery-v4/index.html;
 
     location ~ \.php$ {
         fastcgi_pass unix:/run/php/php8.3-fpm.sock;
@@ -187,7 +212,12 @@ location ^~ /escuelait/curso-jquery-escuelait/ {
 
 ---
 
-## Autor
+## Eventos personalizados
 
-**Antonio Francisco Cutillas García** — [AntonyDev](https://antonydev.tech)  
-Licencia: ISC
+| Evento | Cuándo se emite |
+|---|---|
+| `spa:route-loaded` | Tras renderizar una ruta (incluye `detail.id` y `detail.path`) |
+| `spa:first-route-loaded` | Primera ruta cargada con éxito (desbloquea el loader) |
+| `spa:route-load-error` | Error en carga de ruta (`detail.source`, `detail.message`) |
+
+El loader inicial (`effect-loading-page.js`) escucha los dos últimos y aplica un timeout de 6 s como fallback.
