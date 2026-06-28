@@ -296,7 +296,7 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
 
                 try {
 
-                    await loadContent(route404);
+                    await loadContent(route404, source);
                     return route404;
 
                 } catch (err) {
@@ -310,10 +310,10 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
 
 
             /*
-                ------------------------------------------------------------------------
-                ----------  Carga de contenido dinámico, Componentes del DOM  ----------
-                ----------  y Metadatos de la Ruta (título, favicon, CSS, JS)  ---------
-                ------------------------------------------------------------------------
+                *  ---------------------------------------------------------------  *
+                *  -----  Carga de contenido dinámico, Componentes del DOM   -----  *
+                *  -----  y Metadatos de la Ruta (título, favicon, CSS, JS)  -----  *
+                *  ---------------------------------------------------------------  *
             */
 
 
@@ -321,15 +321,16 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
             * ----------------------------------
             * -----  `loadContent(route)`  -----
             * ----------------------------------
-            * 
+            *
             * - Carga contenido con o sin ViewTransition.
             * - Siempre devuelve una Promise.
-            * 
-            * @param {Route} route
+            *
+            * @param {Route} route - `Ruta a cargar`
+            * @param {'init'|'click'|'popstate'} [source='click'] - `Origen de la navegación. Se propaga a applyRouteMeta para decidir si se hace pushState ('click') o no ('init' / 'popstate').`
             * @returns {Promise<void>}
             */
 
-            const loadContent = (route) => {
+            const loadContent = (route, source = 'click') => {
 
 
                 //  -----  Devolver una promesa que se resuelve cuando la carga y transición (si existe) terminan  -----
@@ -402,7 +403,7 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                             await renderPageComponents(route);
 
                             //  -----  Aplicar metadatos de la ruta (título, favicon, css, scripts, URL) -----
-                            applyRouteMeta(route);
+                            applyRouteMeta(route, source);
 
                             return;
 
@@ -439,7 +440,7 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                             changeThemesJQueryUI();
 
                             //  -----  Aplicar metadatos de la ruta (título, favicon, css, scripts, URL)  -----
-                            applyRouteMeta(route);
+                            applyRouteMeta(route, source);
 
                         } catch (err) {
 
@@ -849,14 +850,15 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
              * -------------------------------------
              * -----  `applyRouteMeta(route)`  -----
              * -------------------------------------
-             * 
+             *
              * - `Función para aplicar metadatos de la ruta (título, favicon, URL, etc.)`
              * @async
              * @param {Route} route - `Objeto de la ruta actual con posibles propiedades: headerTitle, pageTitle, favicon, styles, scripts, path, id.`
-             * 
+             * @param {'init'|'click'|'popstate'} [source='click'] - `Origen de la navegación. Solo 'click' empuja el historial; 'init' y 'popstate' no lo tocan (init lo gestiona externamente con replaceState, popstate ya viene del navegador).`
+             *
              */
 
-            const applyRouteMeta = async (route) => {
+            const applyRouteMeta = async (route, source = 'click') => {
 
 
                 //  -----  Título del Header y Footer  -----
@@ -891,8 +893,28 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                 const newPathname = buildPathname(route.path || '');
 
 
-                //  -----  Evitar push duplicado  -----
-                if (window.location.pathname !== newPathname) {
+                /**
+                 * -------------------------------------
+                 * -----  `stripTrailingSlash(p)`  -----
+                 * -------------------------------------
+                 * - Compara dos pathnames ignorando el trailing slash final.
+                 * - Evita pushState spurious cuando la URL del navegador difiere
+                 *   solo en la barra final (p.ej. /base/ vs /base).
+                 * @param {string} p - Pathname a normalizar
+                 * @returns {string} - Pathname sin trailing slash (raíz → '/')
+                 */
+                const stripTrailingSlash = (p) => {
+                    const s = String(p || '').replace(/\/$/, '');
+                    return s === '' ? '/' : s;
+                };
+
+
+
+                //  -----  En 'init' y 'popstate' NO empujamos historial:  -----
+                //  -----  'init'     lo gestiona externamente con replaceState       -----
+                //  -----  'popstate' ya viene actualizado por el navegador            -----
+                if (source === 'click'
+                    && stripTrailingSlash(window.location.pathname) !== stripTrailingSlash(newPathname)) {
 
                     //  -----  Realizar pushState con el pathname normalizado  -----
                     history.pushState({ id: route.id, path: newPathname }, '', newPathname);
@@ -929,9 +951,9 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
 
 
             /*
-                -------------------------------------------------------------------------------------
-                ----------  Elementos Draggables, Acciones del Navbar, Actualizar Favicon  ----------
-                -------------------------------------------------------------------------------------
+                *  --------------------------------------------------------------------------------  *
+                *  -----  Elementos Draggables, Acciones del Navbar, Actualizar Favicon  ----------  *
+                *  --------------------------------------------------------------------------------  *
             */
 
 
@@ -939,7 +961,6 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
              *  -----------------------------------
              *  -----  `enableDraggables()`   -----
              *  -----------------------------------
-             *  
              * - Habilita la funcionalidad de elementos arrastrables.
              * - Busca cualquier elemento con la clase `.draggable` y aplica .draggable() (jQuery UI).
              * - Esto evita depender de selectores rígidos.
@@ -1283,9 +1304,15 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
              * --------------------------------------
              * -----  `updateFavicon(favicon)`  -----
              * --------------------------------------
-             * 
-             * - Actualiza el favicon añadiendo un query para forzar recarga
-             * 
+             *
+             * - Actualiza el favicon del documento.
+             * - Solo modifica el `href` cuando el favicon cambia realmente;
+             *   esto evita el parpadeo (y la recarga innecesaria) producido
+             *   al inyectar un `?t=Date.now()` distinto en cada navegación,
+             *   incluso en popstate/atrás. El navegador ya cachea por URL:
+             *   cambiar de `html-icon.svg` a `css-icon.svg` refresca el icono,
+             *   pero repetir la misma URL no vuelca a descargar.
+             *
              * @param {string} favicon - URL del nuevo favicon a cargar
              */
 
@@ -1313,17 +1340,22 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                     $favicon = $(link);
                 }
 
-                //  -----  Actualizar el href del favicon con un query para forzar recarga  -----
-                $favicon.attr('href', `${favicon}?t=${Date.now()}`);
+                //  -----  Comparar el href actual (ignorando query string previo) con el nuevo favicon  -----
+                /** @type {string} - `href actual sin query (?...)` */
+                const currentHref = String($favicon.attr('href') || '').split('?')[0];
+
+                //  -----  Actualizar el href del favicon solo si cambió: evita parpadeo y recargas innecesarias  -----
+                if (currentHref !== String(favicon || ''))
+                    $favicon.attr('href', favicon);
 
             };
 
 
 
             /*
-                -----------------------------------
-                ----------  STYLESHEETS  ----------
-                -----------------------------------
+                *  -------------------------  *
+                *  -----  STYLESHEETS  -----  *
+                *  -------------------------  *
             */
 
 
@@ -1412,9 +1444,9 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
 
 
             /*
-                *  -------------------------------
-                *  ----------  SCRIPTS  ----------
-                *  -------------------------------
+                *  ---------------------  *
+                *  -----  SCRIPTS  -----  *
+                *  ---------------------  *
             */
 
 
@@ -1597,9 +1629,9 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
 
 
             /**
-             * ----------------------------------------
-             * -----  `loadLibsByRoute(libs)`  ---------
-             * ----------------------------------------
+             * -------------------------------------
+             * -----  `loadLibsByRoute(libs)`  -----
+             * -------------------------------------
              * @async
              * - Carga los módulos de jQuery UI declarados en `route.libs` bajo demanda.
              * - Se ejecuta después de que el DOM de la ruta está completamente renderizado.
@@ -1656,7 +1688,7 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                         .then((route) => {
 
                             if (route)
-                                return loadContent(route).then(() => route);
+                                return loadContent(route, 'init').then(() => route);
 
                             return loadNotFoundRoute('init');
                         })
@@ -1701,9 +1733,9 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
 
 
             /*
-                -------------------------------
-                ----------  EVENTOS  ----------
-                -------------------------------
+                *  ---------------------  *
+                *  -----  EVENTOS  -----  *
+                *  ---------------------  *
             */
 
 
@@ -1739,7 +1771,7 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                             return;
                         }
 
-                        await loadContent(route);
+                        await loadContent(route, 'click');
 
                     } catch (err) {
 
@@ -1769,8 +1801,9 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                 /** @type {RouteManifest|undefined} - `Entrada de manifest para la URL actual` */
                 const entry = findManifestEntryByPath(raw);
 
-                //  ----- cargamos la ruta sin empujar otra entrada en el historial  ---------
-                //  ----- loadContent(route)  -  hace pushState solo si la ruta difiere  -----
+                //  ----- cargamos la ruta SIN empujar otra entrada en el historial  ---------
+                //  ----- el navegador ya actualizó la URL y el state al navegar atrás/adelante  -----
+                //  ----- pasamos source='popstate' a loadContent para que applyRouteMeta NO haga pushState  -----
                 if (entry) {
 
                     try {
@@ -1782,7 +1815,7 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                             return;
                         }
 
-                        await loadContent(route);
+                        await loadContent(route, 'popstate');
 
                     } catch (err) {
 

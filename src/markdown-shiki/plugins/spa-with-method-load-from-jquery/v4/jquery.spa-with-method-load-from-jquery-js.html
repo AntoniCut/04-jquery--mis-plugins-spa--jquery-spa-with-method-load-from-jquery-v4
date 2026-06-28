@@ -289,7 +289,7 @@
 <span class="line"></span>
 <span class="line"><span style="color:#C586C0">                try</span><span style="color:#D4D4D4"> {</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#C586C0">                    await</span><span style="color:#DCDCAA"> loadContent</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route404</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#C586C0">                    await</span><span style="color:#DCDCAA"> loadContent</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route404</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">source</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"><span style="color:#C586C0">                    return</span><span style="color:#9CDCFE"> route404</span><span style="color:#D4D4D4">;</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#D4D4D4">                } </span><span style="color:#C586C0">catch</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">) {</span></span>
@@ -303,10 +303,10 @@
 <span class="line"></span>
 <span class="line"></span>
 <span class="line"><span style="color:#6A9955">            /*</span></span>
-<span class="line"><span style="color:#6A9955">                ------------------------------------------------------------------------</span></span>
-<span class="line"><span style="color:#6A9955">                ----------  Carga de contenido dinámico, Componentes del DOM  ----------</span></span>
-<span class="line"><span style="color:#6A9955">                ----------  y Metadatos de la Ruta (título, favicon, CSS, JS)  ---------</span></span>
-<span class="line"><span style="color:#6A9955">                ------------------------------------------------------------------------</span></span>
+<span class="line"><span style="color:#6A9955">                *  ---------------------------------------------------------------  *</span></span>
+<span class="line"><span style="color:#6A9955">                *  -----  Carga de contenido dinámico, Componentes del DOM   -----  *</span></span>
+<span class="line"><span style="color:#6A9955">                *  -----  y Metadatos de la Ruta (título, favicon, CSS, JS)  -----  *</span></span>
+<span class="line"><span style="color:#6A9955">                *  ---------------------------------------------------------------  *</span></span>
 <span class="line"><span style="color:#6A9955">            */</span></span>
 <span class="line"></span>
 <span class="line"></span>
@@ -314,15 +314,16 @@
 <span class="line"><span style="color:#6A9955">            * ----------------------------------</span></span>
 <span class="line"><span style="color:#6A9955">            * -----  `loadContent(route)`  -----</span></span>
 <span class="line"><span style="color:#6A9955">            * ----------------------------------</span></span>
-<span class="line"><span style="color:#6A9955">            * </span></span>
+<span class="line"><span style="color:#6A9955">            *</span></span>
 <span class="line"><span style="color:#6A9955">            * - Carga contenido con o sin ViewTransition.</span></span>
 <span class="line"><span style="color:#6A9955">            * - Siempre devuelve una Promise.</span></span>
-<span class="line"><span style="color:#6A9955">            * </span></span>
-<span class="line"><span style="color:#6A9955">            * </span><span style="color:#569CD6">@param</span><span style="color:#4EC9B0"> {Route}</span><span style="color:#9CDCFE"> route</span></span>
+<span class="line"><span style="color:#6A9955">            *</span></span>
+<span class="line"><span style="color:#6A9955">            * </span><span style="color:#569CD6">@param</span><span style="color:#4EC9B0"> {Route}</span><span style="color:#9CDCFE"> route</span><span style="color:#6A9955"> - `Ruta a cargar`</span></span>
+<span class="line"><span style="color:#6A9955">            * </span><span style="color:#569CD6">@param</span><span style="color:#4EC9B0"> {'init'|'click'|'popstate'}</span><span style="color:#9CDCFE"> [source</span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE">'click']</span><span style="color:#6A9955"> - `Origen de la navegación. Se propaga a applyRouteMeta para decidir si se hace pushState ('click') o no ('init' / 'popstate').`</span></span>
 <span class="line"><span style="color:#6A9955">            * </span><span style="color:#569CD6">@returns</span><span style="color:#4EC9B0"> {Promise&#x3C;void>}</span></span>
 <span class="line"><span style="color:#6A9955">            */</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#569CD6">            const</span><span style="color:#DCDCAA"> loadContent</span><span style="color:#D4D4D4"> = (</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">) </span><span style="color:#569CD6">=></span><span style="color:#D4D4D4"> {</span></span>
+<span class="line"><span style="color:#569CD6">            const</span><span style="color:#DCDCAA"> loadContent</span><span style="color:#D4D4D4"> = (</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">source</span><span style="color:#D4D4D4"> = </span><span style="color:#CE9178">'click'</span><span style="color:#D4D4D4">) </span><span style="color:#569CD6">=></span><span style="color:#D4D4D4"> {</span></span>
 <span class="line"></span>
 <span class="line"></span>
 <span class="line"><span style="color:#6A9955">                //  -----  Devolver una promesa que se resuelve cuando la carga y transición (si existe) terminan  -----</span></span>
@@ -395,7 +396,7 @@
 <span class="line"><span style="color:#C586C0">                            await</span><span style="color:#DCDCAA"> renderPageComponents</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#6A9955">                            //  -----  Aplicar metadatos de la ruta (título, favicon, css, scripts, URL) -----</span></span>
-<span class="line"><span style="color:#DCDCAA">                            applyRouteMeta</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#DCDCAA">                            applyRouteMeta</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">source</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#C586C0">                            return</span><span style="color:#D4D4D4">;</span></span>
 <span class="line"></span>
@@ -432,7 +433,7 @@
 <span class="line"><span style="color:#DCDCAA">                            changeThemesJQueryUI</span><span style="color:#D4D4D4">();</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#6A9955">                            //  -----  Aplicar metadatos de la ruta (título, favicon, css, scripts, URL)  -----</span></span>
-<span class="line"><span style="color:#DCDCAA">                            applyRouteMeta</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#DCDCAA">                            applyRouteMeta</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">source</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#D4D4D4">                        } </span><span style="color:#C586C0">catch</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">) {</span></span>
 <span class="line"></span>
@@ -842,14 +843,15 @@
 <span class="line"><span style="color:#6A9955">             * -------------------------------------</span></span>
 <span class="line"><span style="color:#6A9955">             * -----  `applyRouteMeta(route)`  -----</span></span>
 <span class="line"><span style="color:#6A9955">             * -------------------------------------</span></span>
-<span class="line"><span style="color:#6A9955">             * </span></span>
+<span class="line"><span style="color:#6A9955">             *</span></span>
 <span class="line"><span style="color:#6A9955">             * - `Función para aplicar metadatos de la ruta (título, favicon, URL, etc.)`</span></span>
 <span class="line"><span style="color:#6A9955">             * </span><span style="color:#569CD6">@async</span></span>
 <span class="line"><span style="color:#6A9955">             * </span><span style="color:#569CD6">@param</span><span style="color:#4EC9B0"> {Route}</span><span style="color:#9CDCFE"> route</span><span style="color:#6A9955"> - `Objeto de la ruta actual con posibles propiedades: headerTitle, pageTitle, favicon, styles, scripts, path, id.`</span></span>
-<span class="line"><span style="color:#6A9955">             * </span></span>
+<span class="line"><span style="color:#6A9955">             * </span><span style="color:#569CD6">@param</span><span style="color:#4EC9B0"> {'init'|'click'|'popstate'}</span><span style="color:#9CDCFE"> [source</span><span style="color:#D4D4D4">=</span><span style="color:#9CDCFE">'click']</span><span style="color:#6A9955"> - `Origen de la navegación. Solo 'click' empuja el historial; 'init' y 'popstate' no lo tocan (init lo gestiona externamente con replaceState, popstate ya viene del navegador).`</span></span>
+<span class="line"><span style="color:#6A9955">             *</span></span>
 <span class="line"><span style="color:#6A9955">             */</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#569CD6">            const</span><span style="color:#DCDCAA"> applyRouteMeta</span><span style="color:#D4D4D4"> = </span><span style="color:#569CD6">async</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">) </span><span style="color:#569CD6">=></span><span style="color:#D4D4D4"> {</span></span>
+<span class="line"><span style="color:#569CD6">            const</span><span style="color:#DCDCAA"> applyRouteMeta</span><span style="color:#D4D4D4"> = </span><span style="color:#569CD6">async</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">source</span><span style="color:#D4D4D4"> = </span><span style="color:#CE9178">'click'</span><span style="color:#D4D4D4">) </span><span style="color:#569CD6">=></span><span style="color:#D4D4D4"> {</span></span>
 <span class="line"></span>
 <span class="line"></span>
 <span class="line"><span style="color:#6A9955">                //  -----  Título del Header y Footer  -----</span></span>
@@ -884,8 +886,28 @@
 <span class="line"><span style="color:#569CD6">                const</span><span style="color:#4FC1FF"> newPathname</span><span style="color:#D4D4D4"> = </span><span style="color:#DCDCAA">buildPathname</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">path</span><span style="color:#D4D4D4"> || </span><span style="color:#CE9178">''</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"></span>
 <span class="line"></span>
-<span class="line"><span style="color:#6A9955">                //  -----  Evitar push duplicado  -----</span></span>
-<span class="line"><span style="color:#C586C0">                if</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">window</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">location</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">pathname</span><span style="color:#D4D4D4"> !== </span><span style="color:#9CDCFE">newPathname</span><span style="color:#D4D4D4">) {</span></span>
+<span class="line"><span style="color:#6A9955">                /**</span></span>
+<span class="line"><span style="color:#6A9955">                 * -------------------------------------</span></span>
+<span class="line"><span style="color:#6A9955">                 * -----  `stripTrailingSlash(p)`  -----</span></span>
+<span class="line"><span style="color:#6A9955">                 * -------------------------------------</span></span>
+<span class="line"><span style="color:#6A9955">                 * - Compara dos pathnames ignorando el trailing slash final.</span></span>
+<span class="line"><span style="color:#6A9955">                 * - Evita pushState spurious cuando la URL del navegador difiere</span></span>
+<span class="line"><span style="color:#6A9955">                 *   solo en la barra final (p.ej. /base/ vs /base).</span></span>
+<span class="line"><span style="color:#6A9955">                 * </span><span style="color:#569CD6">@param</span><span style="color:#4EC9B0"> {string}</span><span style="color:#9CDCFE"> p</span><span style="color:#6A9955"> - Pathname a normalizar</span></span>
+<span class="line"><span style="color:#6A9955">                 * </span><span style="color:#569CD6">@returns</span><span style="color:#4EC9B0"> {string}</span><span style="color:#6A9955"> - Pathname sin trailing slash (raíz → '/')</span></span>
+<span class="line"><span style="color:#6A9955">                 */</span></span>
+<span class="line"><span style="color:#569CD6">                const</span><span style="color:#DCDCAA"> stripTrailingSlash</span><span style="color:#D4D4D4"> = (</span><span style="color:#9CDCFE">p</span><span style="color:#D4D4D4">) </span><span style="color:#569CD6">=></span><span style="color:#D4D4D4"> {</span></span>
+<span class="line"><span style="color:#569CD6">                    const</span><span style="color:#4FC1FF"> s</span><span style="color:#D4D4D4"> = </span><span style="color:#DCDCAA">String</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">p</span><span style="color:#D4D4D4"> || </span><span style="color:#CE9178">''</span><span style="color:#D4D4D4">).</span><span style="color:#DCDCAA">replace</span><span style="color:#D4D4D4">(</span><span style="color:#D16969">/</span><span style="color:#D7BA7D">\/</span><span style="color:#DCDCAA">$</span><span style="color:#D16969">/</span><span style="color:#D4D4D4">, </span><span style="color:#CE9178">''</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#C586C0">                    return</span><span style="color:#9CDCFE"> s</span><span style="color:#D4D4D4"> === </span><span style="color:#CE9178">''</span><span style="color:#D4D4D4"> ? </span><span style="color:#CE9178">'/'</span><span style="color:#D4D4D4"> : </span><span style="color:#9CDCFE">s</span><span style="color:#D4D4D4">;</span></span>
+<span class="line"><span style="color:#D4D4D4">                };</span></span>
+<span class="line"></span>
+<span class="line"></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A9955">                //  -----  En 'init' y 'popstate' NO empujamos historial:  -----</span></span>
+<span class="line"><span style="color:#6A9955">                //  -----  'init'     lo gestiona externamente con replaceState       -----</span></span>
+<span class="line"><span style="color:#6A9955">                //  -----  'popstate' ya viene actualizado por el navegador            -----</span></span>
+<span class="line"><span style="color:#C586C0">                if</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">source</span><span style="color:#D4D4D4"> === </span><span style="color:#CE9178">'click'</span></span>
+<span class="line"><span style="color:#D4D4D4">                    &#x26;&#x26; </span><span style="color:#DCDCAA">stripTrailingSlash</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">window</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">location</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">pathname</span><span style="color:#D4D4D4">) !== </span><span style="color:#DCDCAA">stripTrailingSlash</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">newPathname</span><span style="color:#D4D4D4">)) {</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#6A9955">                    //  -----  Realizar pushState con el pathname normalizado  -----</span></span>
 <span class="line"><span style="color:#9CDCFE">                    history</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">pushState</span><span style="color:#D4D4D4">({ </span><span style="color:#9CDCFE">id:</span><span style="color:#9CDCFE"> route</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">id</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">path:</span><span style="color:#9CDCFE"> newPathname</span><span style="color:#D4D4D4"> }, </span><span style="color:#CE9178">''</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">newPathname</span><span style="color:#D4D4D4">);</span></span>
@@ -922,9 +944,9 @@
 <span class="line"></span>
 <span class="line"></span>
 <span class="line"><span style="color:#6A9955">            /*</span></span>
-<span class="line"><span style="color:#6A9955">                -------------------------------------------------------------------------------------</span></span>
-<span class="line"><span style="color:#6A9955">                ----------  Elementos Draggables, Acciones del Navbar, Actualizar Favicon  ----------</span></span>
-<span class="line"><span style="color:#6A9955">                -------------------------------------------------------------------------------------</span></span>
+<span class="line"><span style="color:#6A9955">                *  --------------------------------------------------------------------------------  *</span></span>
+<span class="line"><span style="color:#6A9955">                *  -----  Elementos Draggables, Acciones del Navbar, Actualizar Favicon  ----------  *</span></span>
+<span class="line"><span style="color:#6A9955">                *  --------------------------------------------------------------------------------  *</span></span>
 <span class="line"><span style="color:#6A9955">            */</span></span>
 <span class="line"></span>
 <span class="line"></span>
@@ -932,7 +954,6 @@
 <span class="line"><span style="color:#6A9955">             *  -----------------------------------</span></span>
 <span class="line"><span style="color:#6A9955">             *  -----  `enableDraggables()`   -----</span></span>
 <span class="line"><span style="color:#6A9955">             *  -----------------------------------</span></span>
-<span class="line"><span style="color:#6A9955">             *  </span></span>
 <span class="line"><span style="color:#6A9955">             * - Habilita la funcionalidad de elementos arrastrables.</span></span>
 <span class="line"><span style="color:#6A9955">             * - Busca cualquier elemento con la clase `.draggable` y aplica .draggable() (jQuery UI).</span></span>
 <span class="line"><span style="color:#6A9955">             * - Esto evita depender de selectores rígidos.</span></span>
@@ -1276,9 +1297,15 @@
 <span class="line"><span style="color:#6A9955">             * --------------------------------------</span></span>
 <span class="line"><span style="color:#6A9955">             * -----  `updateFavicon(favicon)`  -----</span></span>
 <span class="line"><span style="color:#6A9955">             * --------------------------------------</span></span>
-<span class="line"><span style="color:#6A9955">             * </span></span>
-<span class="line"><span style="color:#6A9955">             * - Actualiza el favicon añadiendo un query para forzar recarga</span></span>
-<span class="line"><span style="color:#6A9955">             * </span></span>
+<span class="line"><span style="color:#6A9955">             *</span></span>
+<span class="line"><span style="color:#6A9955">             * - Actualiza el favicon del documento.</span></span>
+<span class="line"><span style="color:#6A9955">             * - Solo modifica el `href` cuando el favicon cambia realmente;</span></span>
+<span class="line"><span style="color:#6A9955">             *   esto evita el parpadeo (y la recarga innecesaria) producido</span></span>
+<span class="line"><span style="color:#6A9955">             *   al inyectar un `?t=Date.now()` distinto en cada navegación,</span></span>
+<span class="line"><span style="color:#6A9955">             *   incluso en popstate/atrás. El navegador ya cachea por URL:</span></span>
+<span class="line"><span style="color:#6A9955">             *   cambiar de `html-icon.svg` a `css-icon.svg` refresca el icono,</span></span>
+<span class="line"><span style="color:#6A9955">             *   pero repetir la misma URL no vuelca a descargar.</span></span>
+<span class="line"><span style="color:#6A9955">             *</span></span>
 <span class="line"><span style="color:#6A9955">             * </span><span style="color:#569CD6">@param</span><span style="color:#4EC9B0"> {string}</span><span style="color:#9CDCFE"> favicon</span><span style="color:#6A9955"> - URL del nuevo favicon a cargar</span></span>
 <span class="line"><span style="color:#6A9955">             */</span></span>
 <span class="line"></span>
@@ -1306,17 +1333,22 @@
 <span class="line"><span style="color:#9CDCFE">                    $favicon</span><span style="color:#D4D4D4"> = </span><span style="color:#DCDCAA">$</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">link</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"><span style="color:#D4D4D4">                }</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#6A9955">                //  -----  Actualizar el href del favicon con un query para forzar recarga  -----</span></span>
-<span class="line"><span style="color:#9CDCFE">                $favicon</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">attr</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'href'</span><span style="color:#D4D4D4">, </span><span style="color:#CE9178">`</span><span style="color:#569CD6">${</span><span style="color:#9CDCFE">favicon</span><span style="color:#569CD6">}</span><span style="color:#CE9178">?t=</span><span style="color:#569CD6">${</span><span style="color:#9CDCFE">Date</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">now</span><span style="color:#D4D4D4">()</span><span style="color:#569CD6">}</span><span style="color:#CE9178">`</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#6A9955">                //  -----  Comparar el href actual (ignorando query string previo) con el nuevo favicon  -----</span></span>
+<span class="line"><span style="color:#6A9955">                /** </span><span style="color:#569CD6">@type</span><span style="color:#4EC9B0"> {string}</span><span style="color:#6A9955"> - `href actual sin query (?...)` */</span></span>
+<span class="line"><span style="color:#569CD6">                const</span><span style="color:#4FC1FF"> currentHref</span><span style="color:#D4D4D4"> = </span><span style="color:#DCDCAA">String</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">$favicon</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">attr</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'href'</span><span style="color:#D4D4D4">) || </span><span style="color:#CE9178">''</span><span style="color:#D4D4D4">).</span><span style="color:#DCDCAA">split</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'?'</span><span style="color:#D4D4D4">)[</span><span style="color:#B5CEA8">0</span><span style="color:#D4D4D4">];</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A9955">                //  -----  Actualizar el href del favicon solo si cambió: evita parpadeo y recargas innecesarias  -----</span></span>
+<span class="line"><span style="color:#C586C0">                if</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">currentHref</span><span style="color:#D4D4D4"> !== </span><span style="color:#DCDCAA">String</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">favicon</span><span style="color:#D4D4D4"> || </span><span style="color:#CE9178">''</span><span style="color:#D4D4D4">))</span></span>
+<span class="line"><span style="color:#9CDCFE">                    $favicon</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">attr</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'href'</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">favicon</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#D4D4D4">            };</span></span>
 <span class="line"></span>
 <span class="line"></span>
 <span class="line"></span>
 <span class="line"><span style="color:#6A9955">            /*</span></span>
-<span class="line"><span style="color:#6A9955">                -----------------------------------</span></span>
-<span class="line"><span style="color:#6A9955">                ----------  STYLESHEETS  ----------</span></span>
-<span class="line"><span style="color:#6A9955">                -----------------------------------</span></span>
+<span class="line"><span style="color:#6A9955">                *  -------------------------  *</span></span>
+<span class="line"><span style="color:#6A9955">                *  -----  STYLESHEETS  -----  *</span></span>
+<span class="line"><span style="color:#6A9955">                *  -------------------------  *</span></span>
 <span class="line"><span style="color:#6A9955">            */</span></span>
 <span class="line"></span>
 <span class="line"></span>
@@ -1405,9 +1437,9 @@
 <span class="line"></span>
 <span class="line"></span>
 <span class="line"><span style="color:#6A9955">            /*</span></span>
-<span class="line"><span style="color:#6A9955">                *  -------------------------------</span></span>
-<span class="line"><span style="color:#6A9955">                *  ----------  SCRIPTS  ----------</span></span>
-<span class="line"><span style="color:#6A9955">                *  -------------------------------</span></span>
+<span class="line"><span style="color:#6A9955">                *  ---------------------  *</span></span>
+<span class="line"><span style="color:#6A9955">                *  -----  SCRIPTS  -----  *</span></span>
+<span class="line"><span style="color:#6A9955">                *  ---------------------  *</span></span>
 <span class="line"><span style="color:#6A9955">            */</span></span>
 <span class="line"></span>
 <span class="line"></span>
@@ -1590,9 +1622,9 @@
 <span class="line"></span>
 <span class="line"></span>
 <span class="line"><span style="color:#6A9955">            /**</span></span>
-<span class="line"><span style="color:#6A9955">             * ----------------------------------------</span></span>
-<span class="line"><span style="color:#6A9955">             * -----  `loadLibsByRoute(libs)`  ---------</span></span>
-<span class="line"><span style="color:#6A9955">             * ----------------------------------------</span></span>
+<span class="line"><span style="color:#6A9955">             * -------------------------------------</span></span>
+<span class="line"><span style="color:#6A9955">             * -----  `loadLibsByRoute(libs)`  -----</span></span>
+<span class="line"><span style="color:#6A9955">             * -------------------------------------</span></span>
 <span class="line"><span style="color:#6A9955">             * </span><span style="color:#569CD6">@async</span></span>
 <span class="line"><span style="color:#6A9955">             * - Carga los módulos de jQuery UI declarados en `route.libs` bajo demanda.</span></span>
 <span class="line"><span style="color:#6A9955">             * - Se ejecuta después de que el DOM de la ruta está completamente renderizado.</span></span>
@@ -1649,7 +1681,7 @@
 <span class="line"><span style="color:#D4D4D4">                        .</span><span style="color:#DCDCAA">then</span><span style="color:#D4D4D4">((</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">) </span><span style="color:#569CD6">=></span><span style="color:#D4D4D4"> {</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#C586C0">                            if</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">)</span></span>
-<span class="line"><span style="color:#C586C0">                                return</span><span style="color:#DCDCAA"> loadContent</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">).</span><span style="color:#DCDCAA">then</span><span style="color:#D4D4D4">(() </span><span style="color:#569CD6">=></span><span style="color:#9CDCFE"> route</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#C586C0">                                return</span><span style="color:#DCDCAA"> loadContent</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">, </span><span style="color:#CE9178">'init'</span><span style="color:#D4D4D4">).</span><span style="color:#DCDCAA">then</span><span style="color:#D4D4D4">(() </span><span style="color:#569CD6">=></span><span style="color:#9CDCFE"> route</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#C586C0">                            return</span><span style="color:#DCDCAA"> loadNotFoundRoute</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'init'</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"><span style="color:#D4D4D4">                        })</span></span>
@@ -1694,9 +1726,9 @@
 <span class="line"></span>
 <span class="line"></span>
 <span class="line"><span style="color:#6A9955">            /*</span></span>
-<span class="line"><span style="color:#6A9955">                -------------------------------</span></span>
-<span class="line"><span style="color:#6A9955">                ----------  EVENTOS  ----------</span></span>
-<span class="line"><span style="color:#6A9955">                -------------------------------</span></span>
+<span class="line"><span style="color:#6A9955">                *  ---------------------  *</span></span>
+<span class="line"><span style="color:#6A9955">                *  -----  EVENTOS  -----  *</span></span>
+<span class="line"><span style="color:#6A9955">                *  ---------------------  *</span></span>
 <span class="line"><span style="color:#6A9955">            */</span></span>
 <span class="line"></span>
 <span class="line"></span>
@@ -1732,7 +1764,7 @@
 <span class="line"><span style="color:#C586C0">                            return</span><span style="color:#D4D4D4">;</span></span>
 <span class="line"><span style="color:#D4D4D4">                        }</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#C586C0">                        await</span><span style="color:#DCDCAA"> loadContent</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#C586C0">                        await</span><span style="color:#DCDCAA"> loadContent</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">, </span><span style="color:#CE9178">'click'</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#D4D4D4">                    } </span><span style="color:#C586C0">catch</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">) {</span></span>
 <span class="line"></span>
@@ -1762,8 +1794,9 @@
 <span class="line"><span style="color:#6A9955">                /** </span><span style="color:#569CD6">@type</span><span style="color:#4EC9B0"> {RouteManifest|undefined}</span><span style="color:#6A9955"> - `Entrada de manifest para la URL actual` */</span></span>
 <span class="line"><span style="color:#569CD6">                const</span><span style="color:#4FC1FF"> entry</span><span style="color:#D4D4D4"> = </span><span style="color:#DCDCAA">findManifestEntryByPath</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">raw</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#6A9955">                //  ----- cargamos la ruta sin empujar otra entrada en el historial  ---------</span></span>
-<span class="line"><span style="color:#6A9955">                //  ----- loadContent(route)  -  hace pushState solo si la ruta difiere  -----</span></span>
+<span class="line"><span style="color:#6A9955">                //  ----- cargamos la ruta SIN empujar otra entrada en el historial  ---------</span></span>
+<span class="line"><span style="color:#6A9955">                //  ----- el navegador ya actualizó la URL y el state al navegar atrás/adelante  -----</span></span>
+<span class="line"><span style="color:#6A9955">                //  ----- pasamos source='popstate' a loadContent para que applyRouteMeta NO haga pushState  -----</span></span>
 <span class="line"><span style="color:#C586C0">                if</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">entry</span><span style="color:#D4D4D4">) {</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#C586C0">                    try</span><span style="color:#D4D4D4"> {</span></span>
@@ -1775,7 +1808,7 @@
 <span class="line"><span style="color:#C586C0">                            return</span><span style="color:#D4D4D4">;</span></span>
 <span class="line"><span style="color:#D4D4D4">                        }</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#C586C0">                        await</span><span style="color:#DCDCAA"> loadContent</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#C586C0">                        await</span><span style="color:#DCDCAA"> loadContent</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">, </span><span style="color:#CE9178">'popstate'</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#D4D4D4">                    } </span><span style="color:#C586C0">catch</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">) {</span></span>
 <span class="line"></span>
