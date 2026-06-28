@@ -35,7 +35,7 @@ export const routeHome = {
             "#btnNavbarThemesJQueryUI": btnNavbarThemesJQueryUI,
             "#layoutNavbar": layoutNavbar,
             "#layoutNavbarThemesUI": layoutNavbarThemesUI,
-            "#layoutMain": `${pages}/00-home.html`,
+            "#layoutMain": `${pages}/home.html`,
             "#layoutFooter": layoutFooter,
         },
         headerTitle: 'Curso de jQuery de Escuela.IT',
