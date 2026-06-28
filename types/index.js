@@ -15,3 +15,4 @@ export {};
 /** @typedef {import('./route.js').RouteStyle} RouteStyle */
 /** @typedef {import('./route.js').RouteScript} RouteScript */
 /** @typedef {import('./route.js').RouteLib} RouteLib */
+/** @typedef {import('./route.js').MarkdownShikiEntry} MarkdownShikiEntry */

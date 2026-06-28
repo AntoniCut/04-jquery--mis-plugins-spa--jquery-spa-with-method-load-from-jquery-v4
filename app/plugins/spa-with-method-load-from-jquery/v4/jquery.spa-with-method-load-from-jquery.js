@@ -12,6 +12,7 @@
 /** @typedef {import('../../../../types/index.js').RouteStyle} RouteStyle */
 /** @typedef {import('../../../../types/index.js').RouteLib} RouteLib */
 /** @typedef {import('../../../../types/index.js').Route} Route */
+/** @typedef {import('../../../../types/index.js').MarkdownShikiEntry} MarkdownShikiEntry */
 
 
 /**
@@ -467,7 +468,7 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                     // ----- Si Existe ViewTransition -----
                     try {
 
-                        /** @type {ViewTransition|null} - `Iniciar ViewTransition y cargar componentes/metadatos dentro de la transición. La promesa se resuelve cuando la transición termina.`
+                        /**- `Iniciar ViewTransition y cargar componentes/metadatos dentro de la transición. La promesa se resuelve cuando la transición termina.`
                          * @return {Promise<void>}
                          */
                         const transition = document.startViewTransition(() => loadComponentsAndMeta());
@@ -753,6 +754,7 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
 
                 for (const entry of route.MarkdownShikiHtml) {
 
+                    /** @type {MarkdownShikiEntry} */
                     const { url, target } = entry;
 
                     if (!url || !target) continue;

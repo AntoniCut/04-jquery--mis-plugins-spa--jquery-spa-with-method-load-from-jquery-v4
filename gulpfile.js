@@ -19,6 +19,8 @@ import plumber from 'gulp-plumber';
 import fs from 'fs';
 import path from 'node:path';
 
+import { generateMarkdownShiki } from './generate-markdown-shiki.js';
+
 
 /**  -----  desestructuración de métodos de Gulp  ----- */
 const { src, dest, watch, series, parallel } = gulp;
@@ -477,18 +479,34 @@ export const styles = parallel(css, cssPages);
     -----  🔄  --  COPY ALL  src → app  -----
     -----------------------------------------
     Agrupa todas las tareas de copia y
-    compilación en una sola tarea paralela.
+    compilación en una sola tarea.
 */
 
 
-/** Copia y compila todo src/ → app/ en paralelo. */
-const copyAll = parallel(
+/**
+ * --------------------------------
+ * -----  `generateShiki()`  -----
+ * --------------------------------
+ * - Genera los bloques HTML resaltados con Shiki en src/markdown-shiki/.
+ * - Debe ejecutarse DESPUÉS de `buildSources` (que compila SCSS) y ANTES de
+ *   `copyMarkdownShiki` (que copia el HTML recién generado a app/markdown-shiki/).
+ * @returns {Promise<void>}
+ */
+const generateShiki = async () => {
+    await generateMarkdownShiki();
+};
+
+generateShiki.displayName = 'generateShiki';
+
+
+//  buildSources: copias + compilación SCSS en paralelo (produce app/css/)
+//  No incluye copyMarkdownShiki: el HTML de Shiki se genera después.
+const buildSources = parallel(
     copyComponents,
     copyEffects,
     copyFonts,
     copyLibs,
     copyVendorModules,
-    copyMarkdownShiki,
     copyPages,
     copyPdfs,
     copyPlugins,
@@ -498,6 +516,16 @@ const copyAll = parallel(
     copyScripts,
     copyMain,
     styles,
+);
+
+
+//  copyAll: buildSources → generateShiki → copyMarkdownShiki
+//  generateShiki genera el HTML de Shiki desde los fuentes; copyMarkdownShiki
+//  copia el HTML recién generado a app/markdown-shiki/.
+const copyAll = series(
+    buildSources,
+    generateShiki,
+    copyMarkdownShiki,
 );
 
 
@@ -529,7 +557,7 @@ const watchTask = () => {
         [paths.src.services, copyServices],
         [paths.src.scripts, copyScripts],
         [paths.src.main, copyMain],
-        [paths.src.scssAll, styles],
+        [paths.src.scssAll, series(styles, generateShiki, copyMarkdownShiki)],
     ];
 
     for (const [glob, task] of watchers) {
