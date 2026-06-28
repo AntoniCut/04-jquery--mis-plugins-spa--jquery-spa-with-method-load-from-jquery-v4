@@ -1,0 +1,105 @@
+<pre class="shiki dark-plus" style="background-color:#1E1E1E;color:#D4D4D4" tabindex="0"><code><span class="line"><span style="color:#D4D4D4">(</span><span style="color:#569CD6">function</span><span style="color:#D4D4D4"> () {</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#9CDCFE">    console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">log</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'</span><span style="color:#D7BA7D">\n</span><span style="color:#CE9178">'</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#9CDCFE">    console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">warn</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'-----  astro-page.cjs.js  -----  CommonJS (IIFE)  -----'</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#9CDCFE">    console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">log</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'</span><span style="color:#D7BA7D">\n</span><span style="color:#CE9178">'</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A9955">    //  -----  Constantes  -----</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A9955">    /** Versión del módulo */</span></span>
+<span class="line"><span style="color:#569CD6">    var</span><span style="color:#4FC1FF"> VERSION</span><span style="color:#D4D4D4"> = </span><span style="color:#CE9178">'1.0.0'</span><span style="color:#D4D4D4">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A9955">    /** Conceptos básicos de Astro */</span></span>
+<span class="line"><span style="color:#569CD6">    var</span><span style="color:#4FC1FF"> ASTRO_CONCEPTS</span><span style="color:#D4D4D4"> = </span><span style="color:#9CDCFE">Object</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">freeze</span><span style="color:#D4D4D4">([</span></span>
+<span class="line"><span style="color:#CE9178">        'Islands'</span><span style="color:#D4D4D4">,</span></span>
+<span class="line"><span style="color:#CE9178">        'Components'</span><span style="color:#D4D4D4">,</span></span>
+<span class="line"><span style="color:#CE9178">        'Layouts'</span><span style="color:#D4D4D4">,</span></span>
+<span class="line"><span style="color:#CE9178">        'Pages'</span><span style="color:#D4D4D4">,</span></span>
+<span class="line"><span style="color:#CE9178">        'Content Collections'</span><span style="color:#D4D4D4">,</span></span>
+<span class="line"><span style="color:#CE9178">        'MDX'</span><span style="color:#D4D4D4">,</span></span>
+<span class="line"><span style="color:#CE9178">        'Build Output'</span><span style="color:#D4D4D4">,</span></span>
+<span class="line"><span style="color:#CE9178">        'Integrations'</span><span style="color:#D4D4D4">,</span></span>
+<span class="line"><span style="color:#CE9178">        'Astro.config'</span><span style="color:#D4D4D4">,</span></span>
+<span class="line"><span style="color:#CE9178">        'client:* directives'</span><span style="color:#D4D4D4">,</span></span>
+<span class="line"><span style="color:#D4D4D4">    ]);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A9955">    /** Directivas client-side de Astro */</span></span>
+<span class="line"><span style="color:#569CD6">    var</span><span style="color:#4FC1FF"> ASTRO_CLIENT_DIRECTIVES</span><span style="color:#D4D4D4"> = </span><span style="color:#9CDCFE">Object</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">freeze</span><span style="color:#D4D4D4">([</span></span>
+<span class="line"><span style="color:#CE9178">        'client:load'</span><span style="color:#D4D4D4">,</span></span>
+<span class="line"><span style="color:#CE9178">        'client:idle'</span><span style="color:#D4D4D4">,</span></span>
+<span class="line"><span style="color:#CE9178">        'client:visible'</span><span style="color:#D4D4D4">,</span></span>
+<span class="line"><span style="color:#CE9178">        'client:media'</span><span style="color:#D4D4D4">,</span></span>
+<span class="line"><span style="color:#CE9178">        'client:only'</span><span style="color:#D4D4D4">,</span></span>
+<span class="line"><span style="color:#D4D4D4">    ]);</span></span>
+<span class="line"></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A9955">    //  -----  Funciones  -----</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A9955">    /**</span></span>
+<span class="line"><span style="color:#6A9955">     * Comprueba si una directiva client es válida.</span></span>
+<span class="line"><span style="color:#6A9955">     * </span><span style="color:#569CD6">@param</span><span style="color:#4EC9B0"> {string}</span><span style="color:#9CDCFE"> directive</span></span>
+<span class="line"><span style="color:#6A9955">     * </span><span style="color:#569CD6">@returns</span><span style="color:#4EC9B0"> {boolean}</span></span>
+<span class="line"><span style="color:#6A9955">     */</span></span>
+<span class="line"><span style="color:#569CD6">    function</span><span style="color:#DCDCAA"> isValidClientDirective</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">directive</span><span style="color:#D4D4D4">) {</span></span>
+<span class="line"><span style="color:#C586C0">        return</span><span style="color:#4FC1FF"> ASTRO_CLIENT_DIRECTIVES</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">indexOf</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">directive</span><span style="color:#D4D4D4">) !== -</span><span style="color:#B5CEA8">1</span><span style="color:#D4D4D4">;</span></span>
+<span class="line"><span style="color:#D4D4D4">    }</span></span>
+<span class="line"></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A9955">    /**</span></span>
+<span class="line"><span style="color:#6A9955">     * Formatea un concepto de Astro para display.</span></span>
+<span class="line"><span style="color:#6A9955">     * </span><span style="color:#569CD6">@param</span><span style="color:#4EC9B0"> {string}</span><span style="color:#9CDCFE"> concept</span></span>
+<span class="line"><span style="color:#6A9955">     * </span><span style="color:#569CD6">@returns</span><span style="color:#4EC9B0"> {string}</span></span>
+<span class="line"><span style="color:#6A9955">     */</span></span>
+<span class="line"><span style="color:#569CD6">    function</span><span style="color:#DCDCAA"> formatConcept</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">concept</span><span style="color:#D4D4D4">) {</span></span>
+<span class="line"><span style="color:#C586C0">        return</span><span style="color:#9CDCFE"> concept</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">charAt</span><span style="color:#D4D4D4">(</span><span style="color:#B5CEA8">0</span><span style="color:#D4D4D4">).</span><span style="color:#DCDCAA">toUpperCase</span><span style="color:#D4D4D4">() + </span><span style="color:#9CDCFE">concept</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">slice</span><span style="color:#D4D4D4">(</span><span style="color:#B5CEA8">1</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#D4D4D4">    }</span></span>
+<span class="line"></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A9955">    /**</span></span>
+<span class="line"><span style="color:#6A9955">     * Genera una lista de directivas client.</span></span>
+<span class="line"><span style="color:#6A9955">     * </span><span style="color:#569CD6">@param</span><span style="color:#4EC9B0"> {string[]}</span><span style="color:#9CDCFE"> directives</span></span>
+<span class="line"><span style="color:#6A9955">     * </span><span style="color:#569CD6">@returns</span><span style="color:#4EC9B0"> {string}</span></span>
+<span class="line"><span style="color:#6A9955">     */</span></span>
+<span class="line"><span style="color:#569CD6">    function</span><span style="color:#DCDCAA"> generateDirectiveList</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">directives</span><span style="color:#D4D4D4">) {</span></span>
+<span class="line"><span style="color:#9CDCFE">        directives</span><span style="color:#D4D4D4"> = </span><span style="color:#9CDCFE">directives</span><span style="color:#D4D4D4"> || [];</span></span>
+<span class="line"><span style="color:#C586C0">        return</span><span style="color:#9CDCFE"> directives</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">map</span><span style="color:#D4D4D4">(</span><span style="color:#569CD6">function</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">d</span><span style="color:#D4D4D4">) {</span></span>
+<span class="line"><span style="color:#C586C0">            return</span><span style="color:#CE9178"> '  - '</span><span style="color:#D4D4D4"> + </span><span style="color:#9CDCFE">d</span><span style="color:#D4D4D4">;</span></span>
+<span class="line"><span style="color:#D4D4D4">        }).</span><span style="color:#DCDCAA">join</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'</span><span style="color:#D7BA7D">\n</span><span style="color:#CE9178">'</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#D4D4D4">    }</span></span>
+<span class="line"></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A9955">    //  -----  Demostración  -----</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#9CDCFE">    console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">log</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'-----  ASTRO_CONCEPTS  -----'</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#9CDCFE">    console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">log</span><span style="color:#D4D4D4">(</span><span style="color:#4FC1FF">ASTRO_CONCEPTS</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">join</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">', '</span><span style="color:#D4D4D4">));</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#9CDCFE">    console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">log</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'</span><span style="color:#D7BA7D">\n</span><span style="color:#CE9178">-----  ASTRO_CLIENT_DIRECTIVES  -----'</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#9CDCFE">    console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">log</span><span style="color:#D4D4D4">(</span><span style="color:#4FC1FF">ASTRO_CLIENT_DIRECTIVES</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">join</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">', '</span><span style="color:#D4D4D4">));</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#9CDCFE">    console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">log</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'</span><span style="color:#D7BA7D">\n</span><span style="color:#CE9178">-----  isValidClientDirective()  -----'</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#9CDCFE">    console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">log</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'client:load es válida:'</span><span style="color:#D4D4D4">, </span><span style="color:#DCDCAA">isValidClientDirective</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'client:load'</span><span style="color:#D4D4D4">));</span></span>
+<span class="line"><span style="color:#9CDCFE">    console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">log</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'client:foo NO es válida:'</span><span style="color:#D4D4D4">, </span><span style="color:#DCDCAA">isValidClientDirective</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'client:foo'</span><span style="color:#D4D4D4">));</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#9CDCFE">    console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">log</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'</span><span style="color:#D7BA7D">\n</span><span style="color:#CE9178">-----  formatConcept()  -----'</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#9CDCFE">    console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">log</span><span style="color:#D4D4D4">(</span><span style="color:#DCDCAA">formatConcept</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'islands'</span><span style="color:#D4D4D4">));</span></span>
+<span class="line"><span style="color:#9CDCFE">    console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">log</span><span style="color:#D4D4D4">(</span><span style="color:#DCDCAA">formatConcept</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'content collections'</span><span style="color:#D4D4D4">));</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#9CDCFE">    console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">log</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'</span><span style="color:#D7BA7D">\n</span><span style="color:#CE9178">-----  generateDirectiveList()  -----'</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#9CDCFE">    console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">log</span><span style="color:#D4D4D4">(</span><span style="color:#DCDCAA">generateDirectiveList</span><span style="color:#D4D4D4">([</span><span style="color:#CE9178">'client:load'</span><span style="color:#D4D4D4">, </span><span style="color:#CE9178">'client:idle'</span><span style="color:#D4D4D4">]));</span></span>
+<span class="line"></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A9955">    //  -----  Module Pattern (export via window)  -----</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#9CDCFE">    window</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">AstroUtils</span><span style="color:#D4D4D4"> = {</span></span>
+<span class="line"><span style="color:#9CDCFE">        VERSION:</span><span style="color:#4FC1FF"> VERSION</span><span style="color:#D4D4D4">,</span></span>
+<span class="line"><span style="color:#9CDCFE">        ASTRO_CONCEPTS:</span><span style="color:#4FC1FF"> ASTRO_CONCEPTS</span><span style="color:#D4D4D4">,</span></span>
+<span class="line"><span style="color:#9CDCFE">        ASTRO_CLIENT_DIRECTIVES:</span><span style="color:#4FC1FF"> ASTRO_CLIENT_DIRECTIVES</span><span style="color:#D4D4D4">,</span></span>
+<span class="line"><span style="color:#9CDCFE">        isValidClientDirective:</span><span style="color:#9CDCFE"> isValidClientDirective</span><span style="color:#D4D4D4">,</span></span>
+<span class="line"><span style="color:#9CDCFE">        formatConcept:</span><span style="color:#9CDCFE"> formatConcept</span><span style="color:#D4D4D4">,</span></span>
+<span class="line"><span style="color:#9CDCFE">        generateDirectiveList:</span><span style="color:#9CDCFE"> generateDirectiveList</span></span>
+<span class="line"><span style="color:#D4D4D4">    };</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#9CDCFE">    console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">log</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'</span><span style="color:#D7BA7D">\n</span><span style="color:#CE9178">'</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#D4D4D4">})();</span></span></code></pre>

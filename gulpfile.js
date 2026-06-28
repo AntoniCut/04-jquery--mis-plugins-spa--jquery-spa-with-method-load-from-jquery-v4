@@ -95,6 +95,9 @@ const paths = {
         pagesDir: path.join('src', 'pages'),
         pages: path.posix.join('src', 'pages', '**/*'),
 
+        pagesComponentsDir: path.join('src', 'pages-components'),
+        pagesComponents: path.posix.join('src', 'pages-components', '**/*'),
+
         pdfsDir: path.join('src', 'pdfs'),
         pdfs: path.posix.join('src', 'pdfs', '**/*'),
 
@@ -349,6 +352,9 @@ export const copyMarkdownShiki = createCopyTask('copyMarkdownShiki', { glob: pat
 /** Copia src/pages/ → app/pages/. */
 export const copyPages = createCopyTask('copyPages', { glob: paths.src.pages, checkPath: paths.src.pagesDir });
 
+/** Copia src/pages-components/ → app/pages-components/. */
+export const copyPagesComponents = createCopyTask('copyPagesComponents', { glob: paths.src.pagesComponents, checkPath: paths.src.pagesComponentsDir });
+
 /** Copia src/pdfs/ → app/pdfs/. */
 export const copyPdfs = createCopyTask('copyPdfs', { glob: paths.src.pdfs, checkPath: paths.src.pdfsDir, binary: true });
 
@@ -508,6 +514,7 @@ const buildSources = parallel(
     copyLibs,
     copyVendorModules,
     copyPages,
+    copyPagesComponents,
     copyPdfs,
     copyPlugins,
     copyRoutes,
@@ -550,6 +557,7 @@ const watchTask = () => {
         [['package.json', 'pnpm-lock.yaml'], copyVendorModules],
         [paths.src.markdownShiki, copyMarkdownShiki],
         [paths.src.pages, copyPages],
+        [paths.src.pagesComponents, copyPagesComponents],
         [paths.src.pdfs, copyPdfs],
         [paths.src.plugins, copyPlugins],
         [paths.src.routes, copyRoutes],

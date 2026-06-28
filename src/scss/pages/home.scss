@@ -16,7 +16,7 @@ $spa-scripts-color:    #2e7d32;
 $spa-accent-bg:        #f3f0ff;
 $spa-text:             #1a1033;
 $spa-text-light:       #4a4069;
-$spa-card-bg:          var.$color-white;
+$spa-card-bg:          var.$bg-white;
 $spa-card-border:      rgba($spa-primary, 0.2);
 $spa-card-shadow:      0 4px 16px rgba($spa-primary, 0.1);
 $spa-card-shadow-hover: 0 8px 28px rgba($spa-primary, 0.2);
@@ -28,7 +28,7 @@ $spa-event-color:      $spa-secondary;
 $spa-event-border:     rgba($spa-secondary, 0.35);
 $spa-scripts-bg:       rgba($spa-scripts-color, 0.08);
 $spa-scripts-border:   rgba($spa-scripts-color, 0.35);
-$color-white:          var.$color-white;
+$color-white:          var.$bg-white;
 $shadow-hero-title:    0 2px 8px rgba(0, 0, 0, 0.35);
 
 
@@ -42,7 +42,7 @@ $shadow-hero-title:    0 2px 8px rgba(0, 0, 0, 0.35);
 
 .main__title {
     color: $spa-primary;
-    background: var.$bg-gradient-header;
+    background: var.$bg-grid-pattern-header;
 }
 
 .home-page {
@@ -74,7 +74,7 @@ $shadow-hero-title:    0 2px 8px rgba(0, 0, 0, 0.35);
             min-height: 28rem;
         }
 
-        @include mx.desktopLG {
+        @include mx.desktopXL {
             min-height: 32rem;
         }
     }
@@ -127,7 +127,7 @@ $shadow-hero-title:    0 2px 8px rgba(0, 0, 0, 0.35);
             font-size: 1.8rem;
         }
 
-        @include mx.desktopLG {
+        @include mx.desktopXL {
             font-size: 2rem;
         }
     }

@@ -4,8 +4,8 @@
     *  ------------------------------------------------------------------------  *
 */
 
-@use '../base/variables' as var;
-@use '../base/mixins' as mx;
+@use '../../base/variables' as var;
+@use '../../base/mixins' as mx;
 
 
 //  -----  Variables SCSS  -----
@@ -15,14 +15,14 @@ $jqui-accent:           #f9a825;
 $jqui-accent-bg:        #f0f5fb;
 $jqui-text:             #0d1f30;
 $jqui-text-light:       #3d5470;
-$jqui-card-bg:          var.$color-white;
+$jqui-card-bg:          var.$bg-white;
 $jqui-card-border:      rgba($jqui-primary, 0.2);
 $jqui-card-shadow:      0 4px 16px rgba($jqui-primary, 0.1);
 $jqui-card-shadow-hover: 0 8px 28px rgba($jqui-primary, 0.2);
 $jqui-tag-bg:           rgba($jqui-primary, 0.08);
 $jqui-tag-color:        $jqui-primary;
 $jqui-tag-border:       rgba($jqui-primary, 0.3);
-$color-white:           var.$color-white;
+$color-white:           var.$bg-white;
 $shadow-hero-title:     0 2px 8px rgba(0, 0, 0, 0.35);
 
 
@@ -36,7 +36,7 @@ $shadow-hero-title:     0 2px 8px rgba(0, 0, 0, 0.35);
 
 .main__title {
     color: $jqui-primary;
-    background: var.$bg-gradient-header;
+    //background: var.$bg-grid-pattern-header;
 }
 
 .jquery-ui-page {
@@ -69,7 +69,7 @@ $shadow-hero-title:     0 2px 8px rgba(0, 0, 0, 0.35);
             min-height: 28rem;
         }
 
-        @include mx.desktopLG {
+        @include mx.desktopXL {
             min-height: 32rem;
         }
     }
@@ -120,7 +120,7 @@ $shadow-hero-title:     0 2px 8px rgba(0, 0, 0, 0.35);
             font-size: 1.6rem;
         }
 
-        @include mx.desktopLG {
+        @include mx.desktopXL {
             font-size: 1.8rem;
         }
     }

@@ -4,8 +4,8 @@
     *  ----------------------------------------------------------------  *
 */
 
-@use '../base/variables' as var;
-@use '../base/mixins' as mx;
+@use '../../base/variables' as var;
+@use '../../base/mixins' as mx;
 
 
 //  -----  Variables SCSS  -----
@@ -15,15 +15,15 @@ $html-hero-end:         #ff8c42;
 $html-accent-bg:        #fff8f3;
 $html-text:             #2c3e50;
 $html-text-light:       #5d6d7e;
-$html-card-bg:          var.$color-white;
+$html-card-bg:          var.$bg-white;
 $html-card-border:      rgba($html-primary, 0.2);
 $html-card-shadow:      0 4px 16px rgba($html-primary, 0.1);
 $html-card-shadow-hover: 0 8px 28px rgba($html-primary, 0.2);
 $html-tag-bg:           rgba($html-primary, 0.08);
 $html-tag-color:        $html-primary;
 $html-tag-border:       rgba($html-primary, 0.3);
-$color-white:           var.$color-white;
-$shadow-hero-title:     var.$shadow-text;
+$color-white:           var.$bg-white;
+$shadow-hero-title:     0 2px 8px rgba(0, 0, 0, 0.35);
 
 
 
@@ -37,7 +37,7 @@ $shadow-hero-title:     var.$shadow-text;
 
 .main__title {
     color: $html-primary;
-    background: var.$bg-gradient-header;
+    //background: var.$bg-grid-pattern-header;
 }
 
 .html-page {
@@ -69,7 +69,7 @@ $shadow-hero-title:     var.$shadow-text;
             min-height: 28rem;
         }
 
-        @include mx.desktopLG {
+        @include mx.desktopXL {
             min-height: 32rem;
         }
     }
@@ -120,7 +120,7 @@ $shadow-hero-title:     var.$shadow-text;
             font-size: 1.8rem;
         }
 
-        @include mx.desktopLG {
+        @include mx.desktopXL {
             font-size: 2rem;
         }
     }

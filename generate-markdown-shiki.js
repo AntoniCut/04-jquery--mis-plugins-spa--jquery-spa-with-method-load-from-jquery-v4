@@ -86,13 +86,18 @@ const BANNER_PATTERN = /-----/;
  *   el path del archivo fuente (.ts, .js, .html o .scss) usando la convención
  *   de nombres multi-sufijo.
  *
- * - Convenciones del proyecto jQuery:
+* - Convenciones del proyecto jQuery:
  *     -ts.html   →  src/scripts/ts/.../*.ts
  *     -js.html   →  src/scripts/.../*.js  (con fallback a src/scripts/js/)
- *     -html.html →  src/pages/.../*.html
+ *     -html.html →  src/pages-components/.../*.html  (contenido real de la vista)
  *     -css.html  →  src/scss/pages/.../*.scss  (lee SCSS fuente, no CSS compilado)
+ *     -scss.html →  src/scss/pages/.../*.scss  (lee SCSS fuente)
  *
- * @param {string} htmlUrlPath  - p.ej. `/base/app/markdown-shiki/clase-17/01-ejercicio-01-js.html`
+ * - Para las rutas de stack, los fuentes viven bajo un subdirectorio `stack/`
+ *   (p.ej. src/pages-components/stack/html-page.html). El derivador prueba
+ *   primero la ruta con `stack/` y luego la ruta plana como fallback.
+ *
+ * @param {string} htmlUrlPath  - p.ej. `/base/app/markdown-shiki/pages/html-page-html.html`
  * @returns {{ srcPath: string, lang: string, relHtml: string } | null} - Objeto con la información del archivo fuente o `null` si no se puede derivar.
  */
 
@@ -109,15 +114,36 @@ const deriveSource = (htmlUrlPath) => {
     const relHtml = htmlUrlPath.slice(idx + MARKER.length);
 
 
+    /**
+     * - `Devuelve el primer path candidato que existe en disco, o el primero si ninguno existe`
+     *   (para que el caller pueda emitir un mensaje de "Fuente no encontrado" coherente).
+     * @param {string[]} candidates - Lista de paths absolutos candidatos en orden de preferencia.
+     * @returns {string} - El primer path existente, o el primer candidato si ninguno existe.
+     */
+    const firstExisting = (candidates) => {
+        for (const c of candidates) {
+            if (existsSync(c))
+                return c;
+        }
+        return candidates[0];
+    };
+
+
     //*  -----  Derivar el path del archivo si termina en -html.html  -----
     if (relHtml.endsWith('-html.html')) {
 
-        /** - `Ruta relativa del archivo fuente HTML` */
-        const relSrc = relHtml.replace(/-html\.html$/, '.html');
+        /** - `Ruta relativa del archivo fuente HTML (sin prefijo pages/)` */
+        const relSrc = relHtml.replace(/-html\.html$/, '.html').replace(/^pages\//, '');
 
-        //  -----  Subpath → src/pages/ (fuentes de páginas)  -----
+        //  -----  Subpath pages/ → src/pages-components/ (contenido real de la vista)  -----
+        //  -----  Probar primero con stack/ (convención v4) y luego plano (convención v3)  -----
         return {
-            srcPath: join(__dirname, 'src/pages', relSrc),
+            srcPath: firstExisting([
+                join(__dirname, 'src/pages-components/stack', relSrc),
+                join(__dirname, 'src/pages-components', relSrc),
+                join(__dirname, 'src/pages/stack', relSrc),
+                join(__dirname, 'src/pages', relSrc),
+            ]),
             lang: 'html',
             relHtml
         };
@@ -127,12 +153,33 @@ const deriveSource = (htmlUrlPath) => {
     //*  -----  Derivar el path del archivo si termina en -css.html  -----
     if (relHtml.endsWith('-css.html')) {
 
-        /** - `Ruta relativa del archivo fuente SCSS` */
-        const relSrc = relHtml.replace(/-css\.html$/, '.scss');
+        /** - `Ruta relativa del archivo fuente SCSS (sin prefijo pages/)` */
+        const relSrc = relHtml.replace(/-css\.html$/, '.scss').replace(/^pages\//, '');
 
-        //  -----  Subpath → src/scss/pages/ (fuentes de SCSS)  -----
+        //  -----  Subpath pages/ → src/scss/pages/ (fuentes de SCSS)  -----
         return {
-            srcPath: join(__dirname, 'src/scss/pages', relSrc),
+            srcPath: firstExisting([
+                join(__dirname, 'src/scss/pages/stack', relSrc),
+                join(__dirname, 'src/scss/pages', relSrc),
+            ]),
+            lang: 'scss',
+            relHtml
+        };
+    }
+
+
+    //*  -----  Derivar el path del archivo si termina en -scss.html  -----
+    if (relHtml.endsWith('-scss.html')) {
+
+        /** - `Ruta relativa del archivo fuente SCSS (sin prefijo pages/)` */
+        const relSrc = relHtml.replace(/-scss\.html$/, '.scss').replace(/^pages\//, '');
+
+        //  -----  Subpath pages/ → src/scss/pages/ (fuentes de SCSS)  -----
+        return {
+            srcPath: firstExisting([
+                join(__dirname, 'src/scss/pages/stack', relSrc),
+                join(__dirname, 'src/scss/pages', relSrc),
+            ]),
             lang: 'scss',
             relHtml
         };
@@ -145,16 +192,41 @@ const deriveSource = (htmlUrlPath) => {
         /** - `Ruta relativa del archivo fuente JavaScript` */
         const relSrc = relHtml.replace(/-js\.html$/, '.js');
 
-        //  -----  Primero busca en src/scripts/ directamente (convención jQuery project)  -----
-        const directPath = join(__dirname, 'src/scripts', relSrc);
+        //  -----  Subpath plugins/ → src/plugins/ (fuentes de plugins)  -----
+        if (relSrc.startsWith('plugins/')) {
 
-        if (existsSync(directPath)) {
-            return { srcPath: directPath, lang: 'javascript', relHtml };
+            /** - `Ruta relativa del archivo fuente del plugin (sin prefijo plugins/)` */
+            const pluginRelSrc = relSrc.replace(/^plugins\//, '');
+
+            //  -----  Subpath plugins/ → src/plugins/ (fuentes de plugins)  -----
+            return {
+                srcPath: join(__dirname, 'src/plugins', pluginRelSrc),
+                lang: 'javascript',
+                relHtml
+            };
         }
 
-        //  -----  Fallback: src/scripts/js/ (convención TypeScript project)  -----
+        //  -----  Subpath pages/ → src/scripts/pages/ (fuentes de scripts de página)  -----
+        //  -----  Probar primero con stack/ (convención v4) y luego plano  -----
+        if (relSrc.startsWith('pages/')) {
+
+            /** - `Ruta relativa del archivo fuente JS (sin prefijo pages/)` */
+            const pageRelSrc = relSrc.replace(/^pages\//, '');
+
+            return {
+                srcPath: firstExisting([
+                    join(__dirname, 'src/scripts/pages/stack', pageRelSrc),
+                    join(__dirname, 'src/scripts/pages', pageRelSrc),
+                    join(__dirname, 'src/scripts', relSrc),
+                ]),
+                lang: 'javascript',
+                relHtml
+            };
+        }
+
+        //  -----  Fallback: src/scripts/ directamente (otros scripts del proyecto)  -----
         return {
-            srcPath: join(__dirname, 'src/scripts/js', relSrc),
+            srcPath: join(__dirname, 'src/scripts', relSrc),
             lang: 'javascript',
             relHtml
         };

@@ -17,18 +17,20 @@ const {
     layoutNavbar,
     layoutNavbarThemesUI,
     pages,
+    pagesComponents,
     layoutFooter,
     styles,
-    scripts
+    scripts,
+    markdownShiki
 } = paths;
 
 
 /** @type {import('../../types/index.js').Route} */
 export const routeHome = {
         id: 'home',
-        favicon: favicon,
+        favicon: `${favicon}/jquery-icon.svg`,
         pageTitle: 'jQuery SPA With Method Load From jQuery v4',
-        path: '/',
+        path: '',
         components: {
             "#layoutHeader": layoutHeader,
             "#btnNavbar": btnNavbar,
@@ -38,9 +40,18 @@ export const routeHome = {
             "#layoutMain": `${pages}/home.html`,
             "#layoutFooter": layoutFooter,
         },
+        pagesComponents: [
+            { url: `${pagesComponents}/home.html`, target: '[data-component-page="home"]' },
+        ],
+        MarkdownShikiHtml: [
+            { 
+                url: `${markdownShiki}/plugins/spa-with-method-load-from-jquery/v4/jquery.spa-with-method-load-from-jquery-js.html`, 
+                target: '[data-shiki="codeEsmJs"]' 
+            }
+        ],
         headerTitle: 'Curso de jQuery de Escuela.IT',
         styles: [
-            { href: `${styles}/pages/00-home.css` },
+            { href: `${styles}/pages/home.css` },
         ],
         scripts: [
             { src: `${scripts}/tooltips.js` },
@@ -48,5 +59,5 @@ export const routeHome = {
         libs: [
             { name: 'tooltip' },
             { name: 'draggable' },
-        ]
+        ],
 };

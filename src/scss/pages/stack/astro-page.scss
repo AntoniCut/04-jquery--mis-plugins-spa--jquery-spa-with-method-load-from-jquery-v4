@@ -4,8 +4,8 @@
     *  ----------------------------------------------------------------  *
 */
 
-@use '../base/variables' as var;
-@use '../base/mixins' as mx;
+@use '../../base/variables' as var;
+@use '../../base/mixins' as mx;
 
 
 //  -----  Variables  -----
@@ -15,15 +15,15 @@ $astro-hero-end:         #ff8c42;
 $astro-accent-bg:        #fff4ef;
 $astro-text:             #2c3e50;
 $astro-text-light:       #5d6d7e;
-$astro-card-bg:          var.$color-white;
+$astro-card-bg:          var.$bg-white;
 $astro-card-border:      rgba($astro-primary, 0.2);
 $astro-card-shadow:      0 4px 16px rgba($astro-primary, 0.1);
 $astro-card-shadow-hover: 0 8px 28px rgba($astro-primary, 0.2);
 $astro-tag-bg:           rgba($astro-primary, 0.08);
 $astro-tag-color:        $astro-primary;
 $astro-tag-border:       rgba($astro-primary, 0.3);
-$color-white:            var.$color-white;
-$shadow-hero-title:      var.$shadow-text;
+$color-white:            var.$bg-white;
+$shadow-hero-title:      0 2px 8px rgba(0, 0, 0, 0.35);
 
 
 //  -----  Layout Header  -----
@@ -36,7 +36,7 @@ $shadow-hero-title:      var.$shadow-text;
 
 .main__title {
     color: $astro-primary;
-    background: var.$bg-gradient-header;
+    //background: var.$bg-grid-pattern-header;
 }
 
 .astro-page {
@@ -68,7 +68,7 @@ $shadow-hero-title:      var.$shadow-text;
             min-height: 28rem;
         }
 
-        @include mx.desktopLG {
+        @include mx.desktopXL {
             min-height: 32rem;
         }
     }
@@ -119,7 +119,7 @@ $shadow-hero-title:      var.$shadow-text;
             font-size: 1.8rem;
         }
 
-        @include mx.desktopLG {
+        @include mx.desktopXL {
             font-size: 2rem;
         }
     }

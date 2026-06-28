@@ -7,46 +7,60 @@
 
 import { paths } from './paths.js';
 
-const { 
-    favicon, 
-    layoutHeader, 
-    layoutNavbar, 
-    pages, 
+
+/** - Desestructuracion de paths */
+const {
+    favicon,
+    layoutHeader,
+    btnNavbar,
+    btnNavbarThemesJQueryUI,
+    layoutNavbar,
+    layoutNavbarThemesUI,
+    pages,
     pagesComponents,
-    MarkdownShikiHtml, 
-    layoutFooter, 
-    styles, 
-    scripts 
+    layoutFooter,
+    styles,
+    scripts,
+    markdownShiki
 } = paths;
 
-/** @type {import("../../types/index.js").Route} */
+
+/** @type {import('../../types/index.js').Route} */
 export const routeHtmlPage = {
-    id: 'htmlPage',
-    favicon: `${favicon}/html-icon.svg`,
-    pageTitle: 'HTML5 — HyperText Markup Language',
-    path: 'html-page',
-    components: {
-        "layoutHeader": `${layoutHeader}`,
-        "layoutNavbar": `${layoutNavbar}`,
-        "layoutMain": `${pages}/html-page.html`,
-        "layoutFooter": `${layoutFooter}`,
-    },
-    pagesComponents: [
-        { url: `${pagesComponents}/html-page.html`, target: '[data-component-page="htmlPage"]' },
-    ], 
-    MarkdownShikiHtml: [
-        { url: `${MarkdownShikiHtml}/pages/html-page-html.html`, target: '[data-shiki="codeHtml"]' },
-        { url: `${MarkdownShikiHtml}/pages/html-page-css.html`, target: '[data-shiki="codeCss"]' },
-        { url: `${MarkdownShikiHtml}/pages/html-page-scss.html`, target: '[data-shiki="codeScss"]' },
-        { url: `${MarkdownShikiHtml}/pages/html-page.cjs-js.html`, target: '[data-shiki="codeCjsJs"]' },
-        { url: `${MarkdownShikiHtml}/pages/html-page.esm-js.html`, target: '[data-shiki="codeEsmJs"]' },
-    ],
-    headerTitle: 'HTML5 — HyperText Markup Language',
-    styles: [
-        { href: `${styles}/html-page.css` }
-    ],
-    scripts: [
-        { src: `${scripts}/js/pages/html-page.cjs.js` },
-        { src: `${scripts}/js/pages/html-page.esm.js`, isModule: true },
-    ]
+        id: 'htmlPage',
+        favicon: `${favicon}/html-icon.svg`,
+        pageTitle: 'HTML5 — HyperText Markup Language',
+        path: 'stack/html-page',
+        components: {
+            "#layoutHeader": layoutHeader,
+            "#btnNavbar": btnNavbar,
+            "#btnNavbarThemesJQueryUI": btnNavbarThemesJQueryUI,
+            "#layoutNavbar": layoutNavbar,
+            "#layoutNavbarThemesUI": layoutNavbarThemesUI,
+            "#layoutMain": `${pages}/stack/html-page.html`,
+            "#layoutFooter": layoutFooter,
+        },
+        pagesComponents: [
+            { url: `${pagesComponents}/stack/html-page.html`, target: '[data-component-page="htmlPage"]' },
+        ],
+        MarkdownShikiHtml: [
+            { url: `${markdownShiki}/pages/stack/html-page-html.html`,  target: '[data-shiki="codeHtml"]' },
+            { url: `${markdownShiki}/pages/stack/html-page-css.html`,   target: '[data-shiki="codeCss"]' },
+            { url: `${markdownShiki}/pages/stack/html-page-scss.html`,  target: '[data-shiki="codeScss"]' },
+            { url: `${markdownShiki}/pages/stack/html-page.cjs-js.html`, target: '[data-shiki="codeCjsJs"]' },
+            { url: `${markdownShiki}/pages/stack/html-page.esm-js.html`, target: '[data-shiki="codeEsmJs"]' },
+        ],
+        headerTitle: 'HTML5 — HyperText Markup Language',
+        styles: [
+            { href: `${styles}/pages/stack/html-page.css` },
+        ],
+        scripts: [
+            { src: `${scripts}/tooltips.js` },
+            { src: `${scripts}/pages/stack/html-page.cjs.js` },
+            { src: `${scripts}/pages/stack/html-page.esm.js`, type: 'module' },
+        ],
+        libs: [
+            { name: 'tooltip' },
+            { name: 'draggable' },
+        ],
 };

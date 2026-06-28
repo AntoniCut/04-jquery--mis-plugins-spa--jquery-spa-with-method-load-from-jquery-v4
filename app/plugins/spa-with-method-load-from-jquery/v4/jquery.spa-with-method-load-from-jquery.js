@@ -13,6 +13,7 @@
 /** @typedef {import('../../../../types/index.js').RouteLib} RouteLib */
 /** @typedef {import('../../../../types/index.js').Route} Route */
 /** @typedef {import('../../../../types/index.js').MarkdownShikiEntry} MarkdownShikiEntry */
+/** @typedef {import('../../../../types/index.js').PageComponentEntry} PageComponentEntry */
 
 
 /**
@@ -397,6 +398,9 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                             console.warn(`La ruta ${route.id} no contiene 'components'`);
                             console.log('\n');
 
+                            //  -----  Renderizar componentes de página (pagesComponents) aunque la ruta no defina 'components'  -----
+                            await renderPageComponents(route);
+
                             //  -----  Aplicar metadatos de la ruta (título, favicon, css, scripts, URL) -----
                             applyRouteMeta(route);
 
@@ -415,6 +419,9 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
 
                             //  ----- Cargar todos los componentes declarados en la ruta -----
                             await loadComponentsDom(route.components);
+
+                            //  -----  Renderizar componentes de página (pagesComponents) dentro de la vista ya cargada  -----
+                            await renderPageComponents(route);
 
                             //  -----  Renderizar Markdown Shiki (código fuente resaltado)  -----
                             await renderMarkdownShiki(route);
@@ -777,6 +784,63 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                         console.error(`❌ renderMarkdownShiki: Error cargando: ${url}`, error);
                     }
                 }
+
+            };
+
+
+            /**
+             * -----------------------------------------------
+             * -----  `renderPageComponents(route)`  ----------
+             * -----------------------------------------------
+             * @async
+             * - Renderiza componentes HTML dentro de la propia vista (no del layout).
+             * - Cada entrada de `route.pagesComponents` es un objeto `{ url, target }`
+             *   donde `target` es un selector CSS del contenedor destino
+             *   (p.ej. `'[data-component-page="htmlPage"]'`).
+             * - Delega la inyección en `loadComponentsDom` para mantener el mismo
+             *   comportamiento que los componentes del layout (visibilidad, inyección,
+             *   reescritura de URLs y manejo de errores).
+             * - Permite renderizar más de un componente por página (array de entradas).
+             * @param {Route} route - Ruta de la cual cargar los componentes de página.
+             * @returns {Promise<void>} - Promesa que se resuelve cuando todos los
+             *   componentes de página se han renderizado (o se han omitido/amañado errores).
+             */
+            const renderPageComponents = async (route) => {
+
+                //  -----  Validación (caso válido: la mayoría de rutas no definen pagesComponents)  -----
+                if (!route.pagesComponents || !Array.isArray(route.pagesComponents))
+                    return;
+
+                //  -----  Construir un objeto { selector: url } para reutilizar loadComponentsDom  -----
+                /** @type {Record<string, string>} */
+                const componentsMap = {};
+
+                //  -----  Iterar sobre cada entrada de pagesComponents  -----
+                for (const entry of route.pagesComponents) {
+
+                    /** @type {string|undefined} - URL del componente de página */
+                    const url = entry?.url;
+
+                    /** @type {string|undefined} - Selector CSS del contenedor destino */
+                    const target = entry?.target;
+
+                    //  -----  Validación de la entrada: debe tener url y target  -----
+                    if (!url || !target) {
+                        console.warn('⚠️ Entrada pagesComponents incompleta (falta url o target). Se omite.');
+                        continue;
+                    }
+
+                    //  -----  Acumular en el mapa selector -> url  -----
+                    componentsMap[target] = url;
+
+                }
+
+                //  -----  Si no hay entradas válidas, salir sin hacer nada  -----
+                if (Object.keys(componentsMap).length === 0)
+                    return;
+
+                //  -----  Cargar todos los componentes de página usando el mismo mecanismo que el layout  -----
+                await loadComponentsDom(componentsMap);
 
             };
 

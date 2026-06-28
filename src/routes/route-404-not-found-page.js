@@ -17,18 +17,20 @@ const {
     layoutNavbar,
     layoutNavbarThemesUI,
     pages,
+    pagesComponents,
     layoutFooter,
     styles,
-    scripts
+    scripts,
+    markdownShiki
 } = paths;
 
 
 /** @type {import('../../types/index.js').Route} */
 export const route404NotFoundPage = {
         id: '404NotFoundPage',
-        favicon: favicon,
+        favicon: `${favicon}/jquery-icon.svg`,
         pageTitle: '404 | Not Found',
-        path: '/404',
+        path: '404',
         components: {
             "#layoutHeader": layoutHeader,
             "#btnNavbar": btnNavbar,
@@ -38,9 +40,11 @@ export const route404NotFoundPage = {
             "#layoutMain": `${pages}/404/404-not-found-page.html`,
             "#layoutFooter": layoutFooter,
         },
+        pagesComponents: [],
+        MarkdownShikiHtml: [],
         headerTitle: 'Página no encontrada - 404 Not Found Page',
         styles: [
-            { href: `${styles}/pages/00-home.css` },
+            { href: `${styles}/pages/home.css` },
         ],
         scripts: [
             { src: `${scripts}/tooltips.js` },
@@ -48,5 +52,5 @@ export const route404NotFoundPage = {
         libs: [
             { name: 'tooltip' },
             { name: 'draggable' },
-        ]
+        ],
 };

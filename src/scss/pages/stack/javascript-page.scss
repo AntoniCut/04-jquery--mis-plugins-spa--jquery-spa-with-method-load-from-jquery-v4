@@ -4,8 +4,8 @@
     *  --------------------------------------------------------------------------------------  *
 */
 
-@use '../base/variables' as var;
-@use '../base/mixins' as mx;
+@use '../../base/variables' as var;
+@use '../../base/mixins' as mx;
 
 
 //  -----  Variables SCSS  -----
@@ -17,7 +17,7 @@ $js-hero-mid:           #4a4a40;
 $js-accent-bg:          #fefde8;
 $js-text:               #1a1a1a;
 $js-text-light:         #555555;
-$js-card-bg:            var.$color-white;
+$js-card-bg:            var.$bg-white;
 $js-card-border:        rgba($js-primary-dark, 0.3);
 $js-card-shadow:        0 4px 16px rgba($js-primary-dark, 0.12);
 $js-card-shadow-hover:  0 8px 28px rgba($js-primary-dark, 0.22);
@@ -27,7 +27,7 @@ $js-tag-border:         rgba($js-primary-dark, 0.4);
 $js-hero-glow:          rgba($js-primary, 0.04);
 $js-hero-text-glow:     0 0 30px rgba($js-primary, 0.5);
 $js-hero-subtitle-color: rgba(255, 255, 255, 0.75);
-$color-white:           var.$color-white;
+$color-white:           var.$bg-white;
 $shadow-hero-title:     0 2px 8px rgba(0, 0, 0, 0.5);
 
 
@@ -41,7 +41,7 @@ $shadow-hero-title:     0 2px 8px rgba(0, 0, 0, 0.5);
 
 .main__title {
     color: $js-primary;
-    background: var.$bg-gradient-header;
+    //background: var.$bg-grid-pattern-header;
 }
 
 .js-page {
@@ -87,7 +87,7 @@ $shadow-hero-title:     0 2px 8px rgba(0, 0, 0, 0.5);
             min-height: 28rem;
         }
 
-        @include mx.desktopLG {
+        @include mx.desktopXL {
             min-height: 32rem;
         }
     }
@@ -142,7 +142,7 @@ $shadow-hero-title:     0 2px 8px rgba(0, 0, 0, 0.5);
             font-size: 1.8rem;
         }
 
-        @include mx.desktopLG {
+        @include mx.desktopXL {
             font-size: 2rem;
         }
     }

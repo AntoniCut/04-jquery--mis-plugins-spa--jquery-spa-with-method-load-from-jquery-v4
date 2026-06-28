@@ -4,26 +4,26 @@
     *  ----------------------------------------------------------------  *
 */
 
-@use '../base/variables' as var;
-@use '../base/mixins' as mx;
+@use '../../base/variables' as var;
+@use '../../base/mixins' as mx;
 
 
 //  -----  Variables  -----
-$react-primary:          var.$color-secondary;
+$react-primary:          var.$color-primary;
 $react-secondary:        #149eca;
 $react-hero-end:         #78e4f5;
 $react-accent-bg:        #f0f9fb;
 $react-text:             #2c3e50;
 $react-text-light:       #5d6d7e;
-$react-card-bg:          var.$color-white;
+$react-card-bg:          var.$bg-white;
 $react-card-border:      rgba($react-primary, 0.2);
 $react-card-shadow:      0 4px 16px rgba($react-primary, 0.1);
 $react-card-shadow-hover: 0 8px 28px rgba($react-primary, 0.2);
 $react-tag-bg:           rgba($react-primary, 0.08);
 $react-tag-color:        $react-primary;
 $react-tag-border:       rgba($react-primary, 0.3);
-$color-white:            var.$color-white;
-$shadow-hero-title:      var.$shadow-text;
+$color-white:            var.$bg-white;
+$shadow-hero-title:      0 2px 8px rgba(0, 0, 0, 0.35);
 
 
 //  -----  Layout Header  -----
@@ -36,7 +36,7 @@ $shadow-hero-title:      var.$shadow-text;
 
 .main__title {
     color: $react-primary;
-    background: var.$bg-gradient-header;
+    //background: var.$bg-grid-pattern-header;
 }
 
 .react-page {
@@ -68,7 +68,7 @@ $shadow-hero-title:      var.$shadow-text;
             min-height: 28rem;
         }
 
-        @include mx.desktopLG {
+        @include mx.desktopXL {
             min-height: 32rem;
         }
     }
@@ -119,7 +119,7 @@ $shadow-hero-title:      var.$shadow-text;
             font-size: 1.8rem;
         }
 
-        @include mx.desktopLG {
+        @include mx.desktopXL {
             font-size: 2rem;
         }
     }

@@ -4,8 +4,8 @@
     *  ---------------------------------------------------------------------  *
 */
 
-@use '../base/variables' as var;
-@use '../base/mixins' as mx;
+@use '../../base/variables' as var;
+@use '../../base/mixins' as mx;
 
 
 //  -----  Variables SCSS  -----
@@ -14,14 +14,14 @@ $jq-secondary:        #4099d8;
 $jq-accent-bg:        #eef6fb;
 $jq-text:             #0d2035;
 $jq-text-light:       #3a5672;
-$jq-card-bg:          var.$color-white;
+$jq-card-bg:          var.$bg-white;
 $jq-card-border:      rgba($jq-primary, 0.2);
 $jq-card-shadow:      0 4px 16px rgba($jq-primary, 0.1);
 $jq-card-shadow-hover: 0 8px 28px rgba($jq-primary, 0.2);
 $jq-tag-bg:           rgba($jq-primary, 0.08);
 $jq-tag-color:        $jq-primary;
 $jq-tag-border:       rgba($jq-primary, 0.3);
-$color-white:         var.$color-white;
+$color-white:         var.$bg-white;
 $shadow-hero-title:   0 2px 8px rgba(0, 0, 0, 0.35);
 
 
@@ -35,7 +35,7 @@ $shadow-hero-title:   0 2px 8px rgba(0, 0, 0, 0.35);
 
 .main__title {
     color: $jq-primary;
-    background: var.$bg-gradient-header;
+    //background: var.$bg-grid-pattern-header;
 }
 
 .jquery-page {
@@ -67,7 +67,7 @@ $shadow-hero-title:   0 2px 8px rgba(0, 0, 0, 0.35);
             min-height: 28rem;
         }
 
-        @include mx.desktopLG {
+        @include mx.desktopXL {
             min-height: 32rem;
         }
     }
@@ -118,7 +118,7 @@ $shadow-hero-title:   0 2px 8px rgba(0, 0, 0, 0.35);
             font-size: 1.8rem;
         }
 
-        @include mx.desktopLG {
+        @include mx.desktopXL {
             font-size: 2rem;
         }
     }
