@@ -916,8 +916,8 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                 if (source === 'click'
                     && stripTrailingSlash(window.location.pathname) !== stripTrailingSlash(newPathname)) {
 
-                    //  -----  Realizar pushState con el pathname normalizado  -----
-                    history.pushState({ id: route.id, path: newPathname }, '', newPathname);
+                    //  -----  Realizar pushState con el pathname normalizado y el favicon para actualización síncrona en popstate (evita parpadeo al ir atrás)  -----
+                    history.pushState({ id: route.id, path: newPathname, favicon: route.favicon || null }, '', newPathname);
 
                     console.log('\n');
                     console.warn('navigate ==>', route.id, newPathname);
@@ -1319,8 +1319,12 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
             const updateFavicon = (favicon) => {
 
 
+                //  -----  URL absoluta del nuevo favicon, resuelta contra baseURI: permite comparar de forma fiable ruta relativa (index.html) vs absoluta (ruta) cuando apuntan al mismo archivo  -----
+                /** @type {string} - `URL absoluta del nuevo favicon` */
+                const newAbsolute = new URL(favicon, document.baseURI).href;
+
                 /** @type {JQuery<HTMLLinkElement>} - `Elemento link del favicon` */
-                let $favicon = $('link[rel="icon"]');
+                let $favicon = $('link[rel~="icon"]');
 
                 //  -----  Si no existe el favicon, lo creamos  -----
                 if ($favicon.length === 0) {
@@ -1331,7 +1335,6 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
 
                     //  -----  Configurar el nuevo elemento link para el favicon  -----
                     link.rel = "icon";
-                    link.type = "image/x-icon";
 
                     //  -----  Añadir el nuevo elemento link al head del documento  -----
                     document.head.appendChild(link);
@@ -1340,12 +1343,12 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                     $favicon = $(link);
                 }
 
-                //  -----  Comparar el href actual (ignorando query string previo) con el nuevo favicon  -----
-                /** @type {string} - `href actual sin query (?...)` */
-                const currentHref = String($favicon.attr('href') || '').split('?')[0];
+                //  -----  Comparar la URL ABSOLUTA YA RESUELTA (prop('href'), no attr) sin query string contra la nueva  -----
+                /** @type {string} - `href absoluto actual sin query (?...)` */
+                const currentAbsolute = String($favicon.prop('href') || '').split('?')[0];
 
-                //  -----  Actualizar el href del favicon solo si cambió: evita parpadeo y recargas innecesarias  -----
-                if (currentHref !== String(favicon || ''))
+                //  -----  Actualizar el href solo si el archivo cambia realmente: evita reasignar el atributo (relativo -> absoluto del mismo archivo), que provoca re-descarga y parpadeo  -----
+                if (currentAbsolute !== newAbsolute)
                     $favicon.attr('href', favicon);
 
             };
@@ -1706,7 +1709,7 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                             const initialPathname = buildPathname(route.path || entry.path || '');
 
                             history.replaceState(
-                                { id: route.id, path: initialPathname, routeFile: entry.file },
+                                { id: route.id, path: initialPathname, routeFile: entry.file, favicon: route.favicon || null },
                                 '',
                                 initialPathname
                             );
@@ -1794,6 +1797,10 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                 ---------------------------------------------------
             */
             window.addEventListener('popstate', async (e) => {
+
+                //  -----  Actualizar el favicon inmediatamente (síncronamente) desde el state para evitar parpadeo durante la carga asíncrona (lazy) del módulo de ruta  -----
+                if (e.state?.favicon)
+                    updateFavicon(e.state.favicon);
 
                 /** @type {string} - `Ruta normalizada desde el state o la URL actual; usar state.path si está presente, si no usar location.pathname` */
                 const raw = e.state?.path ?? window.location.pathname;
