@@ -4,6 +4,8 @@
     *  ------------------------------------------------------------------------------  *
 */
 
+/** @typedef {import('../../types/index.js').WaitForFirstSpaRouteLoadedOptions} WaitForFirstSpaRouteLoadedOptions */
+
 /**
  * -----------------------------------
  * -----  `effectLoadingPage()`  -----
@@ -37,13 +39,50 @@ export const effectLoadingPage = () => {
     };
 
 
-    const waitForFirstSpaRouteLoaded = () => {
+    /**
+     * ---------------------------------------------------------------------
+     * -----  `waitForFirstSpaRouteLoaded({ timeoutMs = 6000 } = {})`  -----
+     * ---------------------------------------------------------------------
+     *
+     * - Escucha `spa:first-route-loaded` (éxito) y `spa:route-load-error` (error).
+     * - Aplica timeout de fallback para no dejar el loader bloqueado.
+     *
+     * @param {WaitForFirstSpaRouteLoadedOptions} [options={}]
+     * @returns {Promise<void>}
+     */
+    const waitForFirstSpaRouteLoaded = ({ timeoutMs = 6000 } = {}) => {
         if (browserWindow.__spaFirstRouteLoaded) {
             return Promise.resolve();
         }
 
         return new Promise((resolve) => {
-            document.addEventListener('spa:first-route-loaded', resolve, { once: true });
+
+            let settled = false;
+
+            const resolveOnce = () => {
+                if (settled)
+                    return;
+                settled = true;
+                clearTimeout(timeoutId);
+                resolve(undefined);
+            };
+
+            const onFirstRouteLoaded = () => {
+                resolveOnce();
+            };
+
+            const onRouteLoadError = (event) => {
+                console.error('Error en carga inicial de ruta SPA:', event);
+                resolveOnce();
+            };
+
+            const timeoutId = setTimeout(() => {
+                console.warn(`Timeout esperando primera ruta SPA (${timeoutMs}ms). Se oculta el loader por fallback.`);
+                resolveOnce();
+            }, timeoutMs);
+
+            document.addEventListener('spa:first-route-loaded', onFirstRouteLoaded, { once: true });
+            document.addEventListener('spa:route-load-error', onRouteLoadError, { once: true });
         });
     };
 
@@ -67,13 +106,11 @@ export const effectLoadingPage = () => {
             return;
         }
 
-        // Espera la primera carga completa de componentes SPA.
-        await waitForFirstSpaRouteLoaded();
+        // Espera la primera carga completa de componentes SPA (ok, error o timeout).
+        await waitForFirstSpaRouteLoaded({ timeoutMs: 6000 });
 
-        // Mantiene el loader 400ms adicionales antes de mostrar la web.
+        // Mantiene el loader 100ms adicionales antes de mostrar la web.
         await delay(100);
-
-        //layout.style.display = 'flex';
 
         requestAnimationFrame(() => layout.classList.add('fade-in'));
 
