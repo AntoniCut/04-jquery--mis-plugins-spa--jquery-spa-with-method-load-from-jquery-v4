@@ -49,7 +49,7 @@ export const routeHome = {
                 target: '[data-shiki="codeEsmJs"]' 
             }
         ],
-        headerTitle: 'Curso de jQuery de Escuela.IT',
+        headerTitle: 'Plugin jQuery SPA With Method Load From jQuery v4',
         styles: [
             { href: `${styles}/pages/home.css` },
         ],

@@ -27,7 +27,7 @@
 <span class="line"><span style="color:#6A9955"> *     - Efecto Loading para la carga inicial de la página.</span></span>
 <span class="line"><span style="color:#6A9955"> *     - 404NotFoundPage: Ruta para manejar páginas no encontradas.</span></span>
 <span class="line"><span style="color:#6A9955"> *     - Normalización de rutas y pathname para evitar problemas con slashes y base.</span></span>
-<span class="line"><span style="color:#6A9955"> *     - Notificación de carga de ruta mediante eventos personalizados.</span></span>
+<span class="line"><span style="color:#6A9955"> *     - Notificación de carga de ruta mediante eventos personalizados (`spa:route-loaded`, `spa:first-route-loaded`, `spa:route-load-error`).</span></span>
 <span class="line"><span style="color:#6A9955"> *     - Manejo de errores en la carga de componentes y rutas.</span></span>
 <span class="line"><span style="color:#6A9955"> *     - Soporte para scripts clásicos y módulos ES6 (type="module").</span></span>
 <span class="line"><span style="color:#6A9955"> *     - Markdown con Shiki para código fuente resaltado.</span></span>
@@ -103,6 +103,56 @@
 <span class="line"></span>
 <span class="line"></span>
 <span class="line"><span style="color:#6A9955">            /**</span></span>
+<span class="line"><span style="color:#6A9955">             * ---------------------------------------------------</span></span>
+<span class="line"><span style="color:#6A9955">             * -----  `collapsePathnameSlashes(pathname = '')`  -----</span></span>
+<span class="line"><span style="color:#6A9955">             * ---------------------------------------------------</span></span>
+<span class="line"><span style="color:#6A9955">             * - Colapsa barras duplicadas en un pathname del navegador.</span></span>
+<span class="line"><span style="color:#6A9955">             * - Evita valores como `//mis-plugins-spa/...` que history API</span></span>
+<span class="line"><span style="color:#6A9955">             *   interpreta como URL protocol-relative (origen distinto → SecurityError).</span></span>
+<span class="line"><span style="color:#6A9955">             * </span><span style="color:#569CD6">@param</span><span style="color:#4EC9B0"> {string}</span><span style="color:#9CDCFE"> pathname</span><span style="color:#6A9955"> - Pathname crudo</span></span>
+<span class="line"><span style="color:#6A9955">             * </span><span style="color:#569CD6">@returns</span><span style="color:#4EC9B0"> {string}</span><span style="color:#6A9955"> - Pathname con una sola barra inicial</span></span>
+<span class="line"><span style="color:#6A9955">             */</span></span>
+<span class="line"><span style="color:#569CD6">            const</span><span style="color:#DCDCAA"> collapsePathnameSlashes</span><span style="color:#D4D4D4"> = (</span><span style="color:#9CDCFE">pathname</span><span style="color:#D4D4D4"> = </span><span style="color:#CE9178">''</span><span style="color:#D4D4D4">) </span><span style="color:#569CD6">=></span><span style="color:#D4D4D4"> {</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#569CD6">                let</span><span style="color:#9CDCFE"> p</span><span style="color:#D4D4D4"> = </span><span style="color:#DCDCAA">String</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">pathname</span><span style="color:#D4D4D4"> || </span><span style="color:#CE9178">''</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#C586C0">                if</span><span style="color:#D4D4D4"> (!</span><span style="color:#9CDCFE">p</span><span style="color:#D4D4D4">)</span></span>
+<span class="line"><span style="color:#C586C0">                    return</span><span style="color:#CE9178"> '/'</span><span style="color:#D4D4D4">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#9CDCFE">                p</span><span style="color:#D4D4D4"> = </span><span style="color:#9CDCFE">p</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">replace</span><span style="color:#D4D4D4">(</span><span style="color:#D16969">/</span><span style="color:#D7BA7D">\/+</span><span style="color:#D16969">/</span><span style="color:#569CD6">g</span><span style="color:#D4D4D4">, </span><span style="color:#CE9178">'/'</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#C586C0">                if</span><span style="color:#D4D4D4"> (!</span><span style="color:#9CDCFE">p</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">startsWith</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'/'</span><span style="color:#D4D4D4">))</span></span>
+<span class="line"><span style="color:#9CDCFE">                    p</span><span style="color:#D4D4D4"> = </span><span style="color:#CE9178">`/</span><span style="color:#569CD6">${</span><span style="color:#9CDCFE">p</span><span style="color:#569CD6">}</span><span style="color:#CE9178">`</span><span style="color:#D4D4D4">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#C586C0">                return</span><span style="color:#9CDCFE"> p</span><span style="color:#D4D4D4">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#D4D4D4">            };</span></span>
+<span class="line"></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A9955">            /**</span></span>
+<span class="line"><span style="color:#6A9955">             * ---------------------------------------------------</span></span>
+<span class="line"><span style="color:#6A9955">             * -----  `safeHistoryPathname(pathname = '')`  -----</span></span>
+<span class="line"><span style="color:#6A9955">             * ---------------------------------------------------</span></span>
+<span class="line"><span style="color:#6A9955">             * - Pathname seguro para history.pushState/replaceState (misma origin).</span></span>
+<span class="line"><span style="color:#6A9955">             * </span><span style="color:#569CD6">@param</span><span style="color:#4EC9B0"> {string}</span><span style="color:#9CDCFE"> pathname</span><span style="color:#6A9955"> - Pathname crudo o relativo</span></span>
+<span class="line"><span style="color:#6A9955">             * </span><span style="color:#569CD6">@returns</span><span style="color:#4EC9B0"> {string}</span><span style="color:#6A9955"> - Pathname absoluto normalizado</span></span>
+<span class="line"><span style="color:#6A9955">             */</span></span>
+<span class="line"><span style="color:#569CD6">            const</span><span style="color:#DCDCAA"> safeHistoryPathname</span><span style="color:#D4D4D4"> = (</span><span style="color:#9CDCFE">pathname</span><span style="color:#D4D4D4"> = </span><span style="color:#CE9178">''</span><span style="color:#D4D4D4">) </span><span style="color:#569CD6">=></span><span style="color:#D4D4D4"> {</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#C586C0">                try</span><span style="color:#D4D4D4"> {</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#C586C0">                    return</span><span style="color:#569CD6"> new</span><span style="color:#DCDCAA"> URL</span><span style="color:#D4D4D4">(</span><span style="color:#DCDCAA">collapsePathnameSlashes</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">pathname</span><span style="color:#D4D4D4">), </span><span style="color:#9CDCFE">location</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">origin</span><span style="color:#D4D4D4">).</span><span style="color:#9CDCFE">pathname</span><span style="color:#D4D4D4">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#D4D4D4">                } </span><span style="color:#C586C0">catch</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">e</span><span style="color:#D4D4D4">) {</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#C586C0">                    return</span><span style="color:#DCDCAA"> collapsePathnameSlashes</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">pathname</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#D4D4D4">                }</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#D4D4D4">            };</span></span>
+<span class="line"></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A9955">            /**</span></span>
 <span class="line"><span style="color:#6A9955">             * -----------------------------------</span></span>
 <span class="line"><span style="color:#6A9955">             * -----  `normalize(raw = '')`  -----</span></span>
 <span class="line"><span style="color:#6A9955">             * -----------------------------------</span></span>
@@ -122,9 +172,21 @@
 <span class="line"><span style="color:#6A9955">                /** </span><span style="color:#569CD6">@type</span><span style="color:#4EC9B0"> {string}</span><span style="color:#6A9955"> - `Cadena normalizada` */</span></span>
 <span class="line"><span style="color:#569CD6">                let</span><span style="color:#9CDCFE"> s</span><span style="color:#D4D4D4"> = </span><span style="color:#DCDCAA">String</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">raw</span><span style="color:#D4D4D4"> || </span><span style="color:#CE9178">''</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#6A9955">                //  -----  quitar base si está presente  -----</span></span>
-<span class="line"><span style="color:#C586C0">                if</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">base</span><span style="color:#D4D4D4"> &#x26;&#x26; </span><span style="color:#9CDCFE">s</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">startsWith</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">base</span><span style="color:#D4D4D4">))</span></span>
-<span class="line"><span style="color:#9CDCFE">                    s</span><span style="color:#D4D4D4"> = </span><span style="color:#9CDCFE">s</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">slice</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">base</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">length</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#6A9955">                //  -----  colapsar slashes duplicados en pathnames absolutos del navegador  -----</span></span>
+<span class="line"><span style="color:#C586C0">                if</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">s</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">startsWith</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'/'</span><span style="color:#D4D4D4">))</span></span>
+<span class="line"><span style="color:#9CDCFE">                    s</span><span style="color:#D4D4D4"> = </span><span style="color:#DCDCAA">collapsePathnameSlashes</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">s</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A9955">                //  -----  quitar base si está presente (también con base/path colapsados)  -----</span></span>
+<span class="line"><span style="color:#C586C0">                if</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">base</span><span style="color:#D4D4D4">) {</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#569CD6">                    const</span><span style="color:#4FC1FF"> normalizedBase</span><span style="color:#D4D4D4"> = </span><span style="color:#DCDCAA">collapsePathnameSlashes</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">base</span><span style="color:#D4D4D4">).</span><span style="color:#DCDCAA">replace</span><span style="color:#D4D4D4">(</span><span style="color:#D16969">/</span><span style="color:#D7BA7D">\/</span><span style="color:#DCDCAA">$</span><span style="color:#D16969">/</span><span style="color:#D4D4D4">, </span><span style="color:#CE9178">''</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#C586C0">                    if</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">normalizedBase</span><span style="color:#D4D4D4"> &#x26;&#x26; </span><span style="color:#9CDCFE">s</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">startsWith</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">normalizedBase</span><span style="color:#D4D4D4">))</span></span>
+<span class="line"><span style="color:#9CDCFE">                        s</span><span style="color:#D4D4D4"> = </span><span style="color:#9CDCFE">s</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">slice</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">normalizedBase</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">length</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#C586C0">                    else</span><span style="color:#C586C0"> if</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">s</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">startsWith</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">base</span><span style="color:#D4D4D4">))</span></span>
+<span class="line"><span style="color:#9CDCFE">                        s</span><span style="color:#D4D4D4"> = </span><span style="color:#9CDCFE">s</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">slice</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">base</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">length</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#D4D4D4">                }</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#6A9955">                //  -----  quitar leading/trailing slash  -----</span></span>
 <span class="line"><span style="color:#9CDCFE">                s</span><span style="color:#D4D4D4"> = </span><span style="color:#9CDCFE">s</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">replace</span><span style="color:#D4D4D4">(</span><span style="color:#D16969">/</span><span style="color:#DCDCAA">^</span><span style="color:#D7BA7D">\/</span><span style="color:#DCDCAA">|</span><span style="color:#D7BA7D">\/</span><span style="color:#DCDCAA">$</span><span style="color:#D16969">/</span><span style="color:#569CD6">g</span><span style="color:#D4D4D4">, </span><span style="color:#CE9178">''</span><span style="color:#D4D4D4">);</span></span>
@@ -156,14 +218,17 @@
 <span class="line"><span style="color:#569CD6">                const</span><span style="color:#4FC1FF"> trimmed</span><span style="color:#D4D4D4"> = </span><span style="color:#9CDCFE">routePath</span><span style="color:#D4D4D4"> ? </span><span style="color:#CE9178">`/</span><span style="color:#569CD6">${</span><span style="color:#DCDCAA">String</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">routePath</span><span style="color:#D4D4D4">).</span><span style="color:#DCDCAA">replace</span><span style="color:#D4D4D4">(</span><span style="color:#D16969">/</span><span style="color:#DCDCAA">^</span><span style="color:#D7BA7D">\/</span><span style="color:#DCDCAA">|</span><span style="color:#D7BA7D">\/</span><span style="color:#DCDCAA">$</span><span style="color:#D16969">/</span><span style="color:#569CD6">g</span><span style="color:#D4D4D4">, </span><span style="color:#CE9178">''</span><span style="color:#D4D4D4">)</span><span style="color:#569CD6">}</span><span style="color:#CE9178">`</span><span style="color:#D4D4D4"> : </span><span style="color:#CE9178">''</span><span style="color:#D4D4D4">;</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#6A9955">                //  -----  Construir pathname absoluto y normalizado  -----</span></span>
+<span class="line"><span style="color:#569CD6">                const</span><span style="color:#4FC1FF"> absoluteBase</span><span style="color:#D4D4D4"> = </span><span style="color:#9CDCFE">base</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">startsWith</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'/'</span><span style="color:#D4D4D4">) ? </span><span style="color:#9CDCFE">base</span><span style="color:#D4D4D4"> : </span><span style="color:#CE9178">`/</span><span style="color:#569CD6">${</span><span style="color:#9CDCFE">base</span><span style="color:#569CD6">}</span><span style="color:#CE9178">`</span><span style="color:#D4D4D4">;</span></span>
+<span class="line"></span>
 <span class="line"><span style="color:#C586C0">                try</span><span style="color:#D4D4D4"> {</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#C586C0">                    return</span><span style="color:#569CD6"> new</span><span style="color:#DCDCAA"> URL</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">base</span><span style="color:#D4D4D4"> + </span><span style="color:#9CDCFE">trimmed</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">location</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">origin</span><span style="color:#D4D4D4">).</span><span style="color:#9CDCFE">pathname</span><span style="color:#D4D4D4">;</span></span>
+<span class="line"><span style="color:#C586C0">                    return</span><span style="color:#DCDCAA"> safeHistoryPathname</span><span style="color:#D4D4D4">(</span><span style="color:#569CD6">new</span><span style="color:#DCDCAA"> URL</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">absoluteBase</span><span style="color:#D4D4D4"> + </span><span style="color:#9CDCFE">trimmed</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">location</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">origin</span><span style="color:#D4D4D4">).</span><span style="color:#9CDCFE">pathname</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#D4D4D4">                } </span><span style="color:#C586C0">catch</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">e</span><span style="color:#D4D4D4">) {</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#6A9955">                    //  -----  fallback básico  -----</span></span>
-<span class="line"><span style="color:#C586C0">                    return</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">base</span><span style="color:#D4D4D4"> + </span><span style="color:#9CDCFE">trimmed</span><span style="color:#D4D4D4">).</span><span style="color:#DCDCAA">replace</span><span style="color:#D4D4D4">(</span><span style="color:#D16969">/</span><span style="color:#D7BA7D">\/\/+</span><span style="color:#D16969">/</span><span style="color:#569CD6">g</span><span style="color:#D4D4D4">, </span><span style="color:#CE9178">'/'</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#C586C0">                    return</span><span style="color:#DCDCAA"> safeHistoryPathname</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">absoluteBase</span><span style="color:#D4D4D4"> + </span><span style="color:#9CDCFE">trimmed</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"></span>
 <span class="line"><span style="color:#D4D4D4">                }</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#D4D4D4">            };</span></span>
@@ -253,8 +318,43 @@
 <span class="line"><span style="color:#C586C0">                return</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">settings</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">routeManifest</span><span style="color:#D4D4D4"> || []).</span><span style="color:#DCDCAA">find</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">entry</span><span style="color:#569CD6"> =></span></span>
 <span class="line"><span style="color:#9CDCFE">                    entry</span><span style="color:#D4D4D4">?.</span><span style="color:#9CDCFE">id</span><span style="color:#D4D4D4"> === </span><span style="color:#CE9178">'404NotFoundPage'</span><span style="color:#D4D4D4"> ||</span></span>
 <span class="line"><span style="color:#DCDCAA">                    normalize</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">entry</span><span style="color:#D4D4D4">?.</span><span style="color:#9CDCFE">path</span><span style="color:#D4D4D4">) === </span><span style="color:#CE9178">'404'</span><span style="color:#D4D4D4"> ||</span></span>
+<span class="line"><span style="color:#DCDCAA">                    normalize</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">entry</span><span style="color:#D4D4D4">?.</span><span style="color:#9CDCFE">path</span><span style="color:#D4D4D4">) === </span><span style="color:#CE9178">'404-not-found'</span><span style="color:#D4D4D4"> ||</span></span>
 <span class="line"><span style="color:#D16969">                    /404/</span><span style="color:#569CD6">i</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">test</span><span style="color:#D4D4D4">(</span><span style="color:#DCDCAA">String</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">entry</span><span style="color:#D4D4D4">?.</span><span style="color:#9CDCFE">id</span><span style="color:#D4D4D4"> || </span><span style="color:#CE9178">''</span><span style="color:#D4D4D4">))</span></span>
 <span class="line"><span style="color:#D4D4D4">                );</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#D4D4D4">            };</span></span>
+<span class="line"></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A9955">            /**</span></span>
+<span class="line"><span style="color:#6A9955">             * ----------------------------------------------------------</span></span>
+<span class="line"><span style="color:#6A9955">             * -----  `notifyRouteLoadError(route, error, source)`  -----</span></span>
+<span class="line"><span style="color:#6A9955">             * ----------------------------------------------------------</span></span>
+<span class="line"><span style="color:#6A9955">             * - Notifica un error durante la carga de ruta.</span></span>
+<span class="line"><span style="color:#6A9955">             * - Emite `spa:route-load-error` con detalles del fallo.</span></span>
+<span class="line"><span style="color:#6A9955">             * - Si ocurre en la carga inicial, desbloquea el loader con fallback seguro.</span></span>
+<span class="line"><span style="color:#6A9955">             * </span><span style="color:#569CD6">@param</span><span style="color:#4EC9B0"> {Route|undefined}</span><span style="color:#9CDCFE"> route</span></span>
+<span class="line"><span style="color:#6A9955">             * </span><span style="color:#569CD6">@param</span><span style="color:#4EC9B0"> {unknown}</span><span style="color:#9CDCFE"> error</span></span>
+<span class="line"><span style="color:#6A9955">             * </span><span style="color:#569CD6">@param</span><span style="color:#4EC9B0"> {string}</span><span style="color:#9CDCFE"> source</span></span>
+<span class="line"><span style="color:#6A9955">             */</span></span>
+<span class="line"><span style="color:#569CD6">            const</span><span style="color:#DCDCAA"> notifyRouteLoadError</span><span style="color:#D4D4D4"> = (</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">error</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">source</span><span style="color:#D4D4D4">) </span><span style="color:#569CD6">=></span><span style="color:#D4D4D4"> {</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#9CDCFE">                console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">error</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'Error cargando ruta SPA:'</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">error</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#9CDCFE">                document</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">dispatchEvent</span><span style="color:#D4D4D4">(</span></span>
+<span class="line"><span style="color:#569CD6">                    new</span><span style="color:#DCDCAA"> CustomEvent</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'spa:route-load-error'</span><span style="color:#D4D4D4">, {</span></span>
+<span class="line"><span style="color:#9CDCFE">                        detail:</span><span style="color:#D4D4D4"> {</span></span>
+<span class="line"><span style="color:#9CDCFE">                            id:</span><span style="color:#9CDCFE"> route</span><span style="color:#D4D4D4">?.</span><span style="color:#9CDCFE">id</span><span style="color:#D4D4D4"> || </span><span style="color:#569CD6">null</span><span style="color:#D4D4D4">,</span></span>
+<span class="line"><span style="color:#9CDCFE">                            path:</span><span style="color:#9CDCFE"> route</span><span style="color:#D4D4D4">?.</span><span style="color:#9CDCFE">path</span><span style="color:#D4D4D4"> || </span><span style="color:#9CDCFE">window</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">location</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">pathname</span><span style="color:#D4D4D4">,</span></span>
+<span class="line"><span style="color:#9CDCFE">                            source</span><span style="color:#D4D4D4">,</span></span>
+<span class="line"><span style="color:#9CDCFE">                            message:</span><span style="color:#9CDCFE"> error</span><span style="color:#569CD6"> instanceof</span><span style="color:#4EC9B0"> Error</span><span style="color:#D4D4D4"> ? </span><span style="color:#9CDCFE">error</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">message</span><span style="color:#D4D4D4"> : </span><span style="color:#DCDCAA">String</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">error</span><span style="color:#D4D4D4"> || </span><span style="color:#CE9178">'Error desconocido'</span><span style="color:#D4D4D4">)</span></span>
+<span class="line"><span style="color:#D4D4D4">                        }</span></span>
+<span class="line"><span style="color:#D4D4D4">                    })</span></span>
+<span class="line"><span style="color:#D4D4D4">                );</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#C586C0">                if</span><span style="color:#D4D4D4"> (!</span><span style="color:#9CDCFE">window</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">__spaFirstRouteLoaded</span><span style="color:#D4D4D4">) {</span></span>
+<span class="line"><span style="color:#9CDCFE">                    window</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">__spaFirstRouteLoaded</span><span style="color:#D4D4D4"> = </span><span style="color:#569CD6">true</span><span style="color:#D4D4D4">;</span></span>
+<span class="line"><span style="color:#9CDCFE">                    document</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">dispatchEvent</span><span style="color:#D4D4D4">(</span><span style="color:#569CD6">new</span><span style="color:#DCDCAA"> CustomEvent</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'spa:first-route-loaded'</span><span style="color:#D4D4D4">));</span></span>
+<span class="line"><span style="color:#D4D4D4">                }</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#D4D4D4">            };</span></span>
 <span class="line"></span>
@@ -276,6 +376,7 @@
 <span class="line"></span>
 <span class="line"><span style="color:#C586C0">                if</span><span style="color:#D4D4D4"> (!</span><span style="color:#9CDCFE">entry404</span><span style="color:#D4D4D4">) {</span></span>
 <span class="line"><span style="color:#9CDCFE">                    console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">error</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">`No existe ruta 404 configurada (source: </span><span style="color:#569CD6">${</span><span style="color:#9CDCFE">source</span><span style="color:#569CD6">}</span><span style="color:#CE9178">).`</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#DCDCAA">                    notifyRouteLoadError</span><span style="color:#D4D4D4">(</span><span style="color:#569CD6">undefined</span><span style="color:#D4D4D4">, </span><span style="color:#569CD6">new</span><span style="color:#DCDCAA"> Error</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'No existe ruta 404 configurada.'</span><span style="color:#D4D4D4">), </span><span style="color:#9CDCFE">source</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"><span style="color:#C586C0">                    return</span><span style="color:#569CD6"> undefined</span><span style="color:#D4D4D4">;</span></span>
 <span class="line"><span style="color:#D4D4D4">                }</span></span>
 <span class="line"></span>
@@ -284,6 +385,7 @@
 <span class="line"></span>
 <span class="line"><span style="color:#C586C0">                if</span><span style="color:#D4D4D4"> (!</span><span style="color:#9CDCFE">route404</span><span style="color:#D4D4D4">) {</span></span>
 <span class="line"><span style="color:#9CDCFE">                    console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">error</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">`No se pudo importar la ruta 404 (source: </span><span style="color:#569CD6">${</span><span style="color:#9CDCFE">source</span><span style="color:#569CD6">}</span><span style="color:#CE9178">).`</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#DCDCAA">                    notifyRouteLoadError</span><span style="color:#D4D4D4">(</span><span style="color:#569CD6">undefined</span><span style="color:#D4D4D4">, </span><span style="color:#569CD6">new</span><span style="color:#DCDCAA"> Error</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'No se pudo importar la ruta 404.'</span><span style="color:#D4D4D4">), </span><span style="color:#9CDCFE">source</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"><span style="color:#C586C0">                    return</span><span style="color:#569CD6"> undefined</span><span style="color:#D4D4D4">;</span></span>
 <span class="line"><span style="color:#D4D4D4">                }</span></span>
 <span class="line"></span>
@@ -295,6 +397,7 @@
 <span class="line"><span style="color:#D4D4D4">                } </span><span style="color:#C586C0">catch</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">) {</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#9CDCFE">                    console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">error</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">`Error loadContent 404 (</span><span style="color:#569CD6">${</span><span style="color:#9CDCFE">source</span><span style="color:#569CD6">}</span><span style="color:#CE9178">):`</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#DCDCAA">                    notifyRouteLoadError</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route404</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">source</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"><span style="color:#C586C0">                    return</span><span style="color:#569CD6"> undefined</span><span style="color:#D4D4D4">;</span></span>
 <span class="line"><span style="color:#D4D4D4">                }</span></span>
 <span class="line"></span>
@@ -392,11 +495,11 @@
 <span class="line"><span style="color:#9CDCFE">                            console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">warn</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">`La ruta </span><span style="color:#569CD6">${</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">id</span><span style="color:#569CD6">}</span><span style="color:#CE9178"> no contiene 'components'`</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"><span style="color:#9CDCFE">                            console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">log</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'</span><span style="color:#D7BA7D">\n</span><span style="color:#CE9178">'</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"></span>
+<span class="line"><span style="color:#6A9955">                            //  -----  Aplicar metadatos antes que pagesComponents (paridad con spa-loader-content-html)  -----</span></span>
+<span class="line"><span style="color:#C586C0">                            await</span><span style="color:#DCDCAA"> applyRouteMeta</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">source</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"></span>
 <span class="line"><span style="color:#6A9955">                            //  -----  Renderizar componentes de página (pagesComponents) aunque la ruta no defina 'components'  -----</span></span>
 <span class="line"><span style="color:#C586C0">                            await</span><span style="color:#DCDCAA"> renderPageComponents</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">);</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A9955">                            //  -----  Aplicar metadatos de la ruta (título, favicon, css, scripts, URL) -----</span></span>
-<span class="line"><span style="color:#DCDCAA">                            applyRouteMeta</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">source</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#C586C0">                            return</span><span style="color:#D4D4D4">;</span></span>
 <span class="line"></span>
@@ -411,14 +514,22 @@
 <span class="line"><span style="color:#6A9955">                        */</span></span>
 <span class="line"><span style="color:#C586C0">                        try</span><span style="color:#D4D4D4"> {</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#6A9955">                            //  ----- Cargar todos los componentes declarados en la ruta -----</span></span>
+<span class="line"><span style="color:#6A9955">                            //  ----- Cargar todos los componentes declarados en la ruta (secuencial) -----</span></span>
 <span class="line"><span style="color:#C586C0">                            await</span><span style="color:#DCDCAA"> loadComponentsDom</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">components</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#6A9955">                            //  -----  Renderizar componentes de página (pagesComponents) dentro de la vista ya cargada  -----</span></span>
-<span class="line"><span style="color:#C586C0">                            await</span><span style="color:#DCDCAA"> renderPageComponents</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#6A9955">                            //  -----  Inicializar acciones del navbar  -----</span></span>
+<span class="line"><span style="color:#C586C0">                            try</span><span style="color:#D4D4D4"> {</span></span>
+<span class="line"><span style="color:#DCDCAA">                                actionsNavbar</span><span style="color:#D4D4D4">();</span></span>
+<span class="line"><span style="color:#D4D4D4">                            } </span><span style="color:#C586C0">catch</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">) {</span></span>
+<span class="line"><span style="color:#9CDCFE">                                console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">warn</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'actionsNavbar falló (probablemente falta .navbar__container en la vista):'</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#D4D4D4">                            }</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#6A9955">                            //  -----  Renderizar Markdown Shiki (código fuente resaltado)  -----</span></span>
-<span class="line"><span style="color:#C586C0">                            await</span><span style="color:#DCDCAA"> renderMarkdownShiki</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#6A9955">                            //  -----  Cambio de themes jQuery UI  -----</span></span>
+<span class="line"><span style="color:#C586C0">                            try</span><span style="color:#D4D4D4"> {</span></span>
+<span class="line"><span style="color:#DCDCAA">                                changeThemesJQueryUI</span><span style="color:#D4D4D4">();</span></span>
+<span class="line"><span style="color:#D4D4D4">                            } </span><span style="color:#C586C0">catch</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">) {</span></span>
+<span class="line"><span style="color:#9CDCFE">                                console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">warn</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'changeThemesJQueryUI falló:'</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#D4D4D4">                            }</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#6A9955">                            //  -----  Cargar libs de jQuery UI bajo demanda para esta ruta  -----</span></span>
 <span class="line"><span style="color:#C586C0">                            await</span><span style="color:#DCDCAA"> loadLibsByRoute</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">libs</span><span style="color:#D4D4D4">);</span></span>
@@ -426,20 +537,19 @@
 <span class="line"><span style="color:#6A9955">                            //  -----  Habilitar elementos draggables tras cargar el DOM y las libs  -----</span></span>
 <span class="line"><span style="color:#DCDCAA">                            enableDraggables</span><span style="color:#D4D4D4">();</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#6A9955">                            //  -----  Inicializar acciones del navbar  -----</span></span>
-<span class="line"><span style="color:#DCDCAA">                            actionsNavbar</span><span style="color:#D4D4D4">();</span></span>
+<span class="line"><span style="color:#6A9955">                            //  -----  Aplicar metadatos de la ruta (título, favicon, css, shiki, scripts, URL)  -----</span></span>
+<span class="line"><span style="color:#C586C0">                            await</span><span style="color:#DCDCAA"> applyRouteMeta</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">source</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#6A9955">                            //  -----  Cambio de themes jQuery UI  -----</span></span>
-<span class="line"><span style="color:#DCDCAA">                            changeThemesJQueryUI</span><span style="color:#D4D4D4">();</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A9955">                            //  -----  Aplicar metadatos de la ruta (título, favicon, css, scripts, URL)  -----</span></span>
-<span class="line"><span style="color:#DCDCAA">                            applyRouteMeta</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">source</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#6A9955">                            //  -----  Renderizar componentes de página (pagesComponents) dentro de la vista ya cargada  -----</span></span>
+<span class="line"><span style="color:#C586C0">                            await</span><span style="color:#DCDCAA"> renderPageComponents</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#D4D4D4">                        } </span><span style="color:#C586C0">catch</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">) {</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#9CDCFE">                            console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">log</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'</span><span style="color:#D7BA7D">\n</span><span style="color:#CE9178">'</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"><span style="color:#9CDCFE">                            console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">error</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'Error en loadComponentsDom:'</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"><span style="color:#9CDCFE">                            console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">log</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'</span><span style="color:#D7BA7D">\n</span><span style="color:#CE9178">'</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#DCDCAA">                            notifyRouteLoadError</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">source</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#6A9955">                            //  -----  Propagar error para que lo capture la Promise externa  -----</span></span>
 <span class="line"><span style="color:#C586C0">                            throw</span><span style="color:#9CDCFE"> err</span><span style="color:#D4D4D4">;</span></span>
@@ -459,6 +569,7 @@
 <span class="line"></span>
 <span class="line"><span style="color:#D4D4D4">                        } </span><span style="color:#C586C0">catch</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">) {</span></span>
 <span class="line"></span>
+<span class="line"><span style="color:#DCDCAA">                            notifyRouteLoadError</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">source</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"><span style="color:#DCDCAA">                            reject</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"><span style="color:#D4D4D4">                        }</span></span>
 <span class="line"></span>
@@ -483,7 +594,10 @@
 <span class="line"><span style="color:#DCDCAA">                                    notifyRouteLoaded</span><span style="color:#D4D4D4">();</span></span>
 <span class="line"><span style="color:#DCDCAA">                                    resolve</span><span style="color:#D4D4D4">();</span></span>
 <span class="line"><span style="color:#D4D4D4">                                })</span></span>
-<span class="line"><span style="color:#D4D4D4">                                .</span><span style="color:#DCDCAA">catch</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">reject</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#D4D4D4">                                .</span><span style="color:#DCDCAA">catch</span><span style="color:#D4D4D4">((</span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">) </span><span style="color:#569CD6">=></span><span style="color:#D4D4D4"> {</span></span>
+<span class="line"><span style="color:#DCDCAA">                                    notifyRouteLoadError</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">source</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#DCDCAA">                                    reject</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#D4D4D4">                                });</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#C586C0">                        else</span><span style="color:#D4D4D4"> {</span></span>
 <span class="line"><span style="color:#DCDCAA">                            notifyRouteLoaded</span><span style="color:#D4D4D4">();</span></span>
@@ -503,9 +617,10 @@
 <span class="line"><span style="color:#DCDCAA">                            notifyRouteLoaded</span><span style="color:#D4D4D4">();</span></span>
 <span class="line"><span style="color:#DCDCAA">                            resolve</span><span style="color:#D4D4D4">();</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#D4D4D4">                        } </span><span style="color:#C586C0">catch</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">) {</span></span>
+<span class="line"><span style="color:#D4D4D4">                        } </span><span style="color:#C586C0">catch</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">innerErr</span><span style="color:#D4D4D4">) {</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#DCDCAA">                            reject</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#DCDCAA">                            notifyRouteLoadError</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">innerErr</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">source</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#DCDCAA">                            reject</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">innerErr</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#D4D4D4">                        }</span></span>
 <span class="line"></span>
@@ -641,21 +756,15 @@
 <span class="line"><span style="color:#6A9955">             * -----  `loadComponentsDom(components)`  -----</span></span>
 <span class="line"><span style="color:#6A9955">             * ---------------------------------------------</span></span>
 <span class="line"><span style="color:#6A9955">             * </span></span>
-<span class="line"><span style="color:#6A9955">             * Carga todos los componentes pasados en el objeto `components`.</span></span>
+<span class="line"><span style="color:#6A9955">             * Carga todos los componentes pasados en el objeto `components` de forma secuencial.</span></span>
 <span class="line"><span style="color:#6A9955">             * components: { "#selector": "/ruta/archivo.html", ... }</span></span>
-<span class="line"><span style="color:#6A9955">             * Devuelve una promesa que se resuelve cuando TODOS los componentes se cargan.</span></span>
 <span class="line"><span style="color:#6A9955">             * </span></span>
 <span class="line"><span style="color:#6A9955">             * </span><span style="color:#569CD6">@param</span><span style="color:#4EC9B0"> {RouteComponents}</span><span style="color:#9CDCFE"> components</span><span style="color:#6A9955"> - `Objeto con selectores y URLs de componentes a cargar en el DOM`</span></span>
-<span class="line"><span style="color:#6A9955">             * </span><span style="color:#569CD6">@returns</span><span style="color:#4EC9B0"> {Promise&#x3C;void[]>}</span><span style="color:#6A9955"> - `Promesa que se resuelve cuando todos los componentes se han cargado.`</span></span>
+<span class="line"><span style="color:#6A9955">             * </span><span style="color:#569CD6">@returns</span><span style="color:#4EC9B0"> {Promise&#x3C;void>}</span><span style="color:#6A9955"> - `Promesa que se resuelve cuando todos los componentes se han cargado.`</span></span>
 <span class="line"><span style="color:#6A9955">             * </span></span>
 <span class="line"><span style="color:#6A9955">             */</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#569CD6">            const</span><span style="color:#DCDCAA"> loadComponentsDom</span><span style="color:#D4D4D4"> = (</span><span style="color:#9CDCFE">components</span><span style="color:#D4D4D4">) </span><span style="color:#569CD6">=></span><span style="color:#D4D4D4"> {</span></span>
-<span class="line"></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A9955">                /** </span><span style="color:#569CD6">@type</span><span style="color:#4EC9B0"> {Promise&#x3C;void>[]}</span><span style="color:#6A9955"> - `Array de promesas para cada carga de componente.` */</span></span>
-<span class="line"><span style="color:#569CD6">                const</span><span style="color:#4FC1FF"> promises</span><span style="color:#D4D4D4"> = [];</span></span>
-<span class="line"></span>
+<span class="line"><span style="color:#569CD6">            const</span><span style="color:#DCDCAA"> loadComponentsDom</span><span style="color:#D4D4D4"> = </span><span style="color:#569CD6">async</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">components</span><span style="color:#D4D4D4">) </span><span style="color:#569CD6">=></span><span style="color:#D4D4D4"> {</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#6A9955">                /*</span></span>
 <span class="line"><span style="color:#6A9955">                    ------------------------------------------------------</span></span>
@@ -664,43 +773,40 @@
 <span class="line"><span style="color:#6A9955">                */</span></span>
 <span class="line"><span style="color:#C586C0">                for</span><span style="color:#D4D4D4"> (</span><span style="color:#569CD6">const</span><span style="color:#4FC1FF"> selector</span><span style="color:#569CD6"> in</span><span style="color:#9CDCFE"> components</span><span style="color:#D4D4D4">) {</span></span>
 <span class="line"></span>
-<span class="line"></span>
 <span class="line"><span style="color:#6A9955">                    //  -----  Verificar que la propiedad pertenece a components  -----</span></span>
 <span class="line"><span style="color:#C586C0">                    if</span><span style="color:#D4D4D4"> (!</span><span style="color:#4EC9B0">Object</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">prototype</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">hasOwnProperty</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">call</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">components</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">selector</span><span style="color:#D4D4D4">))</span></span>
 <span class="line"><span style="color:#C586C0">                        continue</span><span style="color:#D4D4D4">;</span></span>
 <span class="line"></span>
-<span class="line"></span>
 <span class="line"><span style="color:#6A9955">                    /** </span><span style="color:#569CD6">@type</span><span style="color:#4EC9B0"> {string|undefined}</span><span style="color:#6A9955"> - `URL del componente a cargar.` */</span></span>
 <span class="line"><span style="color:#569CD6">                    const</span><span style="color:#4FC1FF"> url</span><span style="color:#D4D4D4"> = </span><span style="color:#9CDCFE">components</span><span style="color:#D4D4D4">[</span><span style="color:#9CDCFE">selector</span><span style="color:#D4D4D4">];</span></span>
 <span class="line"></span>
+<span class="line"><span style="color:#6A9955">                    /** </span><span style="color:#569CD6">@type</span><span style="color:#4EC9B0"> {JQuery&#x3C;HTMLElement>}</span><span style="color:#6A9955"> - `Contenedor del componente` */</span></span>
+<span class="line"><span style="color:#569CD6">                    const</span><span style="color:#4FC1FF"> $container</span><span style="color:#D4D4D4"> = </span><span style="color:#DCDCAA">$</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">selector</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#6A9955">                    //  -----  Si no hay URL definida para el selector, mostrar advertencia y limpiar el contenedor  -----</span></span>
+<span class="line"><span style="color:#6A9955">                    //  -----  Si no hay URL definida, ocultar contenedor y continuar  -----</span></span>
 <span class="line"><span style="color:#C586C0">                    if</span><span style="color:#D4D4D4"> (!</span><span style="color:#9CDCFE">url</span><span style="color:#D4D4D4">) {</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#9CDCFE">                        console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">log</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'</span><span style="color:#D7BA7D">\n</span><span style="color:#CE9178">'</span><span style="color:#D4D4D4">);</span></span>
-<span class="line"><span style="color:#9CDCFE">                        console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">warn</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">`No hay URL para el selector </span><span style="color:#569CD6">${</span><span style="color:#9CDCFE">selector</span><span style="color:#569CD6">}</span><span style="color:#CE9178">`</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#9CDCFE">                        console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">warn</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">`No hay URL para el selector </span><span style="color:#569CD6">${</span><span style="color:#9CDCFE">selector</span><span style="color:#569CD6">}</span><span style="color:#CE9178">. Ocultando contenedor.`</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"><span style="color:#9CDCFE">                        console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">log</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'</span><span style="color:#D7BA7D">\n</span><span style="color:#CE9178">'</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#6A9955">                        //  -----  Limpiar el contenedor del componente si la URL es undefined  -----</span></span>
-<span class="line"><span style="color:#DCDCAA">                        $</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">selector</span><span style="color:#D4D4D4">).</span><span style="color:#DCDCAA">empty</span><span style="color:#D4D4D4">();</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A9955">                        //  -----  Saltar a la siguiente iteración  -----</span></span>
+<span class="line"><span style="color:#9CDCFE">                        $container</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">hide</span><span style="color:#D4D4D4">().</span><span style="color:#DCDCAA">empty</span><span style="color:#D4D4D4">();</span></span>
 <span class="line"><span style="color:#C586C0">                        continue</span><span style="color:#D4D4D4">;</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#D4D4D4">                    }</span></span>
 <span class="line"></span>
+<span class="line"><span style="color:#6A9955">                    //  -----  Restaurar visibilidad antes de cargar  -----</span></span>
+<span class="line"><span style="color:#9CDCFE">                    $container</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">show</span><span style="color:#D4D4D4">();</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#6A9955">                    /** </span><span style="color:#569CD6">@type</span><span style="color:#4EC9B0"> {Promise&#x3C;void>}</span><span style="color:#6A9955"> - `Promesa que carga el componente en el selector correspondiente.` */</span></span>
-<span class="line"><span style="color:#569CD6">                    const</span><span style="color:#4FC1FF"> promise</span><span style="color:#D4D4D4"> = </span><span style="color:#569CD6">new</span><span style="color:#4EC9B0"> Promise</span><span style="color:#D4D4D4">((</span><span style="color:#9CDCFE">resolve</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">reject</span><span style="color:#D4D4D4">) </span><span style="color:#569CD6">=></span><span style="color:#D4D4D4"> {</span></span>
+<span class="line"><span style="color:#C586C0">                    await</span><span style="color:#569CD6"> new</span><span style="color:#4EC9B0"> Promise</span><span style="color:#D4D4D4">((</span><span style="color:#9CDCFE">resolve</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">reject</span><span style="color:#D4D4D4">) </span><span style="color:#569CD6">=></span><span style="color:#D4D4D4"> {</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#D4D4D4">                        </span></span>
 <span class="line"><span style="color:#6A9955">                        /*</span></span>
 <span class="line"><span style="color:#6A9955">                            *  ------------------------------------------------------------  *</span></span>
 <span class="line"><span style="color:#6A9955">                            *  -----  Cargamos componente del DOM con jQuery .load()  -----  *</span></span>
 <span class="line"><span style="color:#6A9955">                            *  ------------------------------------------------------------  *</span></span>
 <span class="line"><span style="color:#6A9955">                        */</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#DCDCAA">                        $</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">selector</span><span style="color:#D4D4D4">).</span><span style="color:#DCDCAA">load</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">url</span><span style="color:#D4D4D4">, </span><span style="color:#569CD6">function</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">response</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">status</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">xhr</span><span style="color:#D4D4D4">) {</span></span>
+<span class="line"><span style="color:#9CDCFE">                        $container</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">load</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">url</span><span style="color:#D4D4D4">, </span><span style="color:#569CD6">function</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">response</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">status</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">xhr</span><span style="color:#D4D4D4">) {</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#6A9955">                            //  -----  Si ocurre un error al cargar el componente  -----</span></span>
 <span class="line"><span style="color:#C586C0">                            if</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">status</span><span style="color:#D4D4D4"> === </span><span style="color:#CE9178">"error"</span><span style="color:#D4D4D4">) {</span></span>
@@ -710,7 +816,7 @@
 <span class="line"><span style="color:#9CDCFE">                                console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">log</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'</span><span style="color:#D7BA7D">\n</span><span style="color:#CE9178">'</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#6A9955">                                //  -----  Mostrar mensaje de error en el contenedor  -----</span></span>
-<span class="line"><span style="color:#DCDCAA">                                $</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">selector</span><span style="color:#D4D4D4">).</span><span style="color:#DCDCAA">html</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">`&#x3C;p>Error 404 al cargar: </span><span style="color:#569CD6">${</span><span style="color:#9CDCFE">url</span><span style="color:#569CD6">}</span><span style="color:#CE9178">&#x3C;/p>`</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#9CDCFE">                                $container</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">html</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">`&#x3C;p>Error 404 al cargar: </span><span style="color:#569CD6">${</span><span style="color:#9CDCFE">url</span><span style="color:#569CD6">}</span><span style="color:#CE9178">&#x3C;/p>`</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#C586C0">                                return</span><span style="color:#DCDCAA"> reject</span><span style="color:#D4D4D4">(</span><span style="color:#569CD6">new</span><span style="color:#DCDCAA"> Error</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">`Error al cargar </span><span style="color:#569CD6">${</span><span style="color:#9CDCFE">url</span><span style="color:#569CD6">}</span><span style="color:#CE9178">`</span><span style="color:#D4D4D4">));</span></span>
 <span class="line"></span>
@@ -726,13 +832,7 @@
 <span class="line"></span>
 <span class="line"><span style="color:#D4D4D4">                    });</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#6A9955">                    //  -----  Añadir la promesa al array  -----</span></span>
-<span class="line"><span style="color:#9CDCFE">                    promises</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">push</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">promise</span><span style="color:#D4D4D4">);</span></span>
-<span class="line"></span>
 <span class="line"><span style="color:#D4D4D4">                }</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A9955">                //  -----  Devolver la promesa que se resuelve cuando todas las cargas terminan  -----</span></span>
-<span class="line"><span style="color:#C586C0">                return</span><span style="color:#4EC9B0"> Promise</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">all</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">promises</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#D4D4D4">            };</span></span>
 <span class="line"></span>
@@ -870,9 +970,12 @@
 <span class="line"><span style="color:#C586C0">                if</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">styles</span><span style="color:#D4D4D4">)</span></span>
 <span class="line"><span style="color:#DCDCAA">                    loadStylesheetByPage</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">styles</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"></span>
+<span class="line"><span style="color:#6A9955">                //  -----  Markdown Shiki  -----</span></span>
+<span class="line"><span style="color:#C586C0">                await</span><span style="color:#DCDCAA"> renderMarkdownShiki</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"></span>
 <span class="line"><span style="color:#6A9955">                //  -----  JS  -----</span></span>
 <span class="line"><span style="color:#C586C0">                if</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">scripts</span><span style="color:#D4D4D4">)</span></span>
-<span class="line"><span style="color:#DCDCAA">                    loadScriptsByPage</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">scripts</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#C586C0">                    await</span><span style="color:#DCDCAA"> loadScriptsByPage</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">scripts</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"></span>
 <span class="line"></span>
 <span class="line"><span style="color:#6A9955">                /*</span></span>
@@ -907,10 +1010,22 @@
 <span class="line"><span style="color:#6A9955">                //  -----  'init'     lo gestiona externamente con replaceState       -----</span></span>
 <span class="line"><span style="color:#6A9955">                //  -----  'popstate' ya viene actualizado por el navegador            -----</span></span>
 <span class="line"><span style="color:#C586C0">                if</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">source</span><span style="color:#D4D4D4"> === </span><span style="color:#CE9178">'click'</span></span>
-<span class="line"><span style="color:#D4D4D4">                    &#x26;&#x26; </span><span style="color:#DCDCAA">stripTrailingSlash</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">window</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">location</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">pathname</span><span style="color:#D4D4D4">) !== </span><span style="color:#DCDCAA">stripTrailingSlash</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">newPathname</span><span style="color:#D4D4D4">)) {</span></span>
+<span class="line"><span style="color:#D4D4D4">                    &#x26;&#x26; </span><span style="color:#DCDCAA">stripTrailingSlash</span><span style="color:#D4D4D4">(</span><span style="color:#DCDCAA">safeHistoryPathname</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">window</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">location</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">pathname</span><span style="color:#D4D4D4">)) !== </span><span style="color:#DCDCAA">stripTrailingSlash</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">newPathname</span><span style="color:#D4D4D4">)) {</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#6A9955">                    //  -----  Realizar pushState con el pathname normalizado y el favicon para actualización síncrona en popstate (evita parpadeo al ir atrás)  -----</span></span>
-<span class="line"><span style="color:#9CDCFE">                    history</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">pushState</span><span style="color:#D4D4D4">({ </span><span style="color:#9CDCFE">id:</span><span style="color:#9CDCFE"> route</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">id</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">path:</span><span style="color:#9CDCFE"> newPathname</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">favicon:</span><span style="color:#9CDCFE"> route</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">favicon</span><span style="color:#D4D4D4"> || </span><span style="color:#569CD6">null</span><span style="color:#D4D4D4"> }, </span><span style="color:#CE9178">''</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">newPathname</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#6A9955">                    /** </span><span style="color:#569CD6">@type</span><span style="color:#4EC9B0"> {RouteManifest|undefined}</span><span style="color:#6A9955"> - `Entrada del manifest para guardar routeFile en el historial` */</span></span>
+<span class="line"><span style="color:#569CD6">                    const</span><span style="color:#4FC1FF"> manifestEntry</span><span style="color:#D4D4D4"> = </span><span style="color:#DCDCAA">findManifestEntryById</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">id</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A9955">                    //  -----  Realizar pushState con pathname, routeFile y favicon para popstate rápido  -----</span></span>
+<span class="line"><span style="color:#9CDCFE">                    history</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">pushState</span><span style="color:#D4D4D4">(</span></span>
+<span class="line"><span style="color:#D4D4D4">                        {</span></span>
+<span class="line"><span style="color:#9CDCFE">                            id:</span><span style="color:#9CDCFE"> route</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">id</span><span style="color:#D4D4D4">,</span></span>
+<span class="line"><span style="color:#9CDCFE">                            path:</span><span style="color:#9CDCFE"> newPathname</span><span style="color:#D4D4D4">,</span></span>
+<span class="line"><span style="color:#9CDCFE">                            routeFile:</span><span style="color:#9CDCFE"> manifestEntry</span><span style="color:#D4D4D4">?.</span><span style="color:#9CDCFE">file</span><span style="color:#D4D4D4"> || </span><span style="color:#569CD6">null</span><span style="color:#D4D4D4">,</span></span>
+<span class="line"><span style="color:#9CDCFE">                            favicon:</span><span style="color:#9CDCFE"> route</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">favicon</span><span style="color:#D4D4D4"> || </span><span style="color:#569CD6">null</span></span>
+<span class="line"><span style="color:#D4D4D4">                        },</span></span>
+<span class="line"><span style="color:#CE9178">                        ''</span><span style="color:#D4D4D4">,</span></span>
+<span class="line"><span style="color:#9CDCFE">                        newPathname</span></span>
+<span class="line"><span style="color:#D4D4D4">                    );</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#9CDCFE">                    console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">log</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'</span><span style="color:#D7BA7D">\n</span><span style="color:#CE9178">'</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"><span style="color:#9CDCFE">                    console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">warn</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'navigate ==>'</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">id</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">newPathname</span><span style="color:#D4D4D4">);</span></span>
@@ -1470,7 +1585,7 @@
 <span class="line"></span>
 <span class="line"><span style="color:#6A9955">                //  -----  Si no hay scripts, salir  -----</span></span>
 <span class="line"><span style="color:#C586C0">                if</span><span style="color:#D4D4D4"> (!</span><span style="color:#9CDCFE">scripts</span><span style="color:#D4D4D4">)</span></span>
-<span class="line"><span style="color:#C586C0">                    return</span><span style="color:#D4D4D4">;</span></span>
+<span class="line"><span style="color:#C586C0">                    return</span><span style="color:#4EC9B0"> Promise</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">resolve</span><span style="color:#D4D4D4">();</span></span>
 <span class="line"></span>
 <span class="line"></span>
 <span class="line"><span style="color:#6A9955">                //  -----  Aceptar array o diccionario  -----</span></span>
@@ -1492,6 +1607,8 @@
 <span class="line"><span style="color:#9CDCFE">                    scriptQueue</span><span style="color:#D4D4D4"> = </span><span style="color:#9CDCFE">scriptQueue</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">then</span><span style="color:#D4D4D4">(() </span><span style="color:#569CD6">=></span><span style="color:#DCDCAA"> loadScripts</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">script</span><span style="color:#D4D4D4">));</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#D4D4D4">                });</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#C586C0">                return</span><span style="color:#9CDCFE"> scriptQueue</span><span style="color:#D4D4D4">;</span></span>
 <span class="line"><span style="color:#D4D4D4">            };</span></span>
 <span class="line"></span>
 <span class="line"></span>
@@ -1512,7 +1629,7 @@
 <span class="line"><span style="color:#569CD6">                const</span><span style="color:#4FC1FF"> scriptUrl</span><span style="color:#D4D4D4"> = </span><span style="color:#DCDCAA">String</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">scriptOptions</span><span style="color:#D4D4D4">?.</span><span style="color:#9CDCFE">src</span><span style="color:#D4D4D4"> || </span><span style="color:#CE9178">''</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#6A9955">                /** </span><span style="color:#569CD6">@type</span><span style="color:#4EC9B0"> {'classic'|'module'}</span><span style="color:#6A9955"> - `Tipo de carga del script` */</span></span>
-<span class="line"><span style="color:#569CD6">                const</span><span style="color:#4FC1FF"> scriptType</span><span style="color:#D4D4D4"> = </span><span style="color:#9CDCFE">scriptOptions</span><span style="color:#D4D4D4">?.</span><span style="color:#9CDCFE">type</span><span style="color:#D4D4D4"> === </span><span style="color:#CE9178">'module'</span><span style="color:#D4D4D4"> ? </span><span style="color:#CE9178">'module'</span><span style="color:#D4D4D4"> : </span><span style="color:#CE9178">'classic'</span><span style="color:#D4D4D4">;</span></span>
+<span class="line"><span style="color:#569CD6">                const</span><span style="color:#4FC1FF"> scriptType</span><span style="color:#D4D4D4"> = (</span><span style="color:#9CDCFE">scriptOptions</span><span style="color:#D4D4D4">?.</span><span style="color:#9CDCFE">type</span><span style="color:#D4D4D4"> === </span><span style="color:#CE9178">'module'</span><span style="color:#D4D4D4"> || </span><span style="color:#9CDCFE">scriptOptions</span><span style="color:#D4D4D4">?.</span><span style="color:#9CDCFE">isModule</span><span style="color:#D4D4D4">) ? </span><span style="color:#CE9178">'module'</span><span style="color:#D4D4D4"> : </span><span style="color:#CE9178">'classic'</span><span style="color:#D4D4D4">;</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#6A9955">                /** </span><span style="color:#569CD6">@type</span><span style="color:#4EC9B0"> {string|null}</span><span style="color:#6A9955"> - `Export opcional del módulo a ejecutar tras la carga` */</span></span>
 <span class="line"><span style="color:#569CD6">                const</span><span style="color:#4FC1FF"> exportFunctionName</span><span style="color:#D4D4D4"> = </span><span style="color:#9CDCFE">scriptOptions</span><span style="color:#D4D4D4">?.</span><span style="color:#9CDCFE">exportFunctionName</span><span style="color:#D4D4D4"> || </span><span style="color:#569CD6">null</span><span style="color:#D4D4D4">;</span></span>
@@ -1672,8 +1789,8 @@
 <span class="line"><span style="color:#569CD6">            const</span><span style="color:#DCDCAA"> init</span><span style="color:#D4D4D4"> = () </span><span style="color:#569CD6">=></span><span style="color:#D4D4D4"> {</span></span>
 <span class="line"></span>
 <span class="line"></span>
-<span class="line"><span style="color:#6A9955">                /** </span><span style="color:#569CD6">@type</span><span style="color:#4EC9B0"> {string}</span><span style="color:#6A9955"> - `Ruta normalizada actual (sin base ni barra final)` */</span></span>
-<span class="line"><span style="color:#569CD6">                const</span><span style="color:#4FC1FF"> initialPath</span><span style="color:#D4D4D4"> = </span><span style="color:#9CDCFE">window</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">location</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">pathname</span><span style="color:#D4D4D4">;</span></span>
+<span class="line"><span style="color:#6A9955">                /** </span><span style="color:#569CD6">@type</span><span style="color:#4EC9B0"> {string}</span><span style="color:#6A9955"> - `Pathname actual del navegador, normalizado para history API` */</span></span>
+<span class="line"><span style="color:#569CD6">                const</span><span style="color:#4FC1FF"> initialPath</span><span style="color:#D4D4D4"> = </span><span style="color:#DCDCAA">safeHistoryPathname</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">window</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">location</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">pathname</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#6A9955">                /** </span><span style="color:#569CD6">@type</span><span style="color:#4EC9B0"> {RouteManifest|undefined}</span><span style="color:#6A9955"> - `Entrada inicial del manifest` */</span></span>
 <span class="line"><span style="color:#569CD6">                const</span><span style="color:#4FC1FF"> entry</span><span style="color:#D4D4D4"> = </span><span style="color:#DCDCAA">findManifestEntryByPath</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">initialPath</span><span style="color:#D4D4D4">);</span></span>
@@ -1692,9 +1809,9 @@
 <span class="line"></span>
 <span class="line"><span style="color:#C586C0">                            if</span><span style="color:#D4D4D4"> (!</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">) {</span></span>
 <span class="line"><span style="color:#9CDCFE">                                history</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">replaceState</span><span style="color:#D4D4D4">(</span></span>
-<span class="line"><span style="color:#D4D4D4">                                    { </span><span style="color:#9CDCFE">id:</span><span style="color:#569CD6"> null</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">path:</span><span style="color:#9CDCFE"> window</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">location</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">pathname</span><span style="color:#D4D4D4"> },</span></span>
+<span class="line"><span style="color:#D4D4D4">                                    { </span><span style="color:#9CDCFE">id:</span><span style="color:#569CD6"> null</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">path:</span><span style="color:#9CDCFE"> initialPath</span><span style="color:#D4D4D4"> },</span></span>
 <span class="line"><span style="color:#CE9178">                                    ''</span><span style="color:#D4D4D4">,</span></span>
-<span class="line"><span style="color:#9CDCFE">                                    window</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">location</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">pathname</span></span>
+<span class="line"><span style="color:#9CDCFE">                                    initialPath</span></span>
 <span class="line"><span style="color:#D4D4D4">                                );</span></span>
 <span class="line"><span style="color:#C586C0">                                return</span><span style="color:#D4D4D4">;</span></span>
 <span class="line"><span style="color:#D4D4D4">                            }</span></span>
@@ -1710,6 +1827,7 @@
 <span class="line"><span style="color:#D4D4D4">                        .</span><span style="color:#DCDCAA">catch</span><span style="color:#D4D4D4">((</span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">) </span><span style="color:#569CD6">=></span><span style="color:#D4D4D4"> {</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#9CDCFE">                            console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">error</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'Error cargando ruta inicial'</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#DCDCAA">                            notifyRouteLoadError</span><span style="color:#D4D4D4">(</span><span style="color:#569CD6">undefined</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">, </span><span style="color:#CE9178">'init'</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"><span style="color:#DCDCAA">                            loadNotFoundRoute</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'init'</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"><span style="color:#D4D4D4">                        });</span></span>
 <span class="line"></span>
@@ -1719,9 +1837,9 @@
 <span class="line"><span style="color:#DCDCAA">                loadNotFoundRoute</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'init'</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#9CDCFE">                history</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">replaceState</span><span style="color:#D4D4D4">(</span></span>
-<span class="line"><span style="color:#D4D4D4">                    { </span><span style="color:#9CDCFE">id:</span><span style="color:#569CD6"> null</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">path:</span><span style="color:#9CDCFE"> window</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">location</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">pathname</span><span style="color:#D4D4D4"> },</span></span>
+<span class="line"><span style="color:#D4D4D4">                    { </span><span style="color:#9CDCFE">id:</span><span style="color:#569CD6"> null</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">path:</span><span style="color:#9CDCFE"> initialPath</span><span style="color:#D4D4D4"> },</span></span>
 <span class="line"><span style="color:#CE9178">                    ''</span><span style="color:#D4D4D4">,</span></span>
-<span class="line"><span style="color:#9CDCFE">                    window</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">location</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">pathname</span></span>
+<span class="line"><span style="color:#9CDCFE">                    initialPath</span></span>
 <span class="line"><span style="color:#D4D4D4">                );</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#D4D4D4">            };</span></span>
@@ -1738,24 +1856,51 @@
 <span class="line"><span style="color:#6A9955">            /*</span></span>
 <span class="line"><span style="color:#6A9955">                -------------------------------------------------------------------</span></span>
 <span class="line"><span style="color:#6A9955">                -----  Manejadores de navegación  -  clicks  ----------------------</span></span>
-<span class="line"><span style="color:#6A9955">                -----  Enlaces: a[data-id] => data-id corresponde a route.id  -----</span></span>
+<span class="line"><span style="color:#6A9955">                -----  Enlaces: a[data-id] o a[data-route]  -----------------------</span></span>
 <span class="line"><span style="color:#6A9955">                -------------------------------------------------------------------</span></span>
 <span class="line"><span style="color:#6A9955">            */</span></span>
-<span class="line"><span style="color:#DCDCAA">            $</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">document</span><span style="color:#D4D4D4">).</span><span style="color:#DCDCAA">on</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'click'</span><span style="color:#D4D4D4">, </span><span style="color:#CE9178">'a[data-id]'</span><span style="color:#D4D4D4">, </span><span style="color:#569CD6">async</span><span style="color:#569CD6"> function</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">event</span><span style="color:#D4D4D4">) {</span></span>
+<span class="line"><span style="color:#DCDCAA">            $</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">document</span><span style="color:#D4D4D4">).</span><span style="color:#DCDCAA">on</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'click'</span><span style="color:#D4D4D4">, </span><span style="color:#CE9178">'a[data-id], a[data-route]'</span><span style="color:#D4D4D4">, </span><span style="color:#569CD6">async</span><span style="color:#569CD6"> function</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">event</span><span style="color:#D4D4D4">) {</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#9CDCFE">                event</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">preventDefault</span><span style="color:#D4D4D4">();</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#6A9955">                /** </span><span style="color:#569CD6">@type</span><span style="color:#4EC9B0"> {string}</span><span style="color:#6A9955"> - `ID de la ruta desde el atributo data-id` */</span></span>
+<span class="line"><span style="color:#6A9955">                /** </span><span style="color:#569CD6">@type</span><span style="color:#4EC9B0"> {string|undefined}</span><span style="color:#6A9955"> - `Nombre del archivo de ruta desde data-route` */</span></span>
+<span class="line"><span style="color:#569CD6">                const</span><span style="color:#4FC1FF"> routeFile</span><span style="color:#D4D4D4"> = </span><span style="color:#DCDCAA">$</span><span style="color:#D4D4D4">(</span><span style="color:#569CD6">this</span><span style="color:#D4D4D4">).</span><span style="color:#DCDCAA">data</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'route'</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A9955">                /** </span><span style="color:#569CD6">@type</span><span style="color:#4EC9B0"> {string|undefined}</span><span style="color:#6A9955"> - `ID de la ruta desde el atributo data-id` */</span></span>
 <span class="line"><span style="color:#569CD6">                const</span><span style="color:#4FC1FF"> dataId</span><span style="color:#D4D4D4"> = </span><span style="color:#DCDCAA">$</span><span style="color:#D4D4D4">(</span><span style="color:#569CD6">this</span><span style="color:#D4D4D4">).</span><span style="color:#DCDCAA">data</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'id'</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#6A9955">                /** </span><span style="color:#569CD6">@type</span><span style="color:#4EC9B0"> {RouteManifest|undefined}</span><span style="color:#6A9955"> - `Entrada del manifest correspondiente al data-id` */</span></span>
-<span class="line"><span style="color:#569CD6">                const</span><span style="color:#4FC1FF"> entry</span><span style="color:#D4D4D4"> = </span><span style="color:#DCDCAA">findManifestEntryById</span><span style="color:#D4D4D4">(</span><span style="color:#DCDCAA">String</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">dataId</span><span style="color:#D4D4D4">));</span></span>
+<span class="line"><span style="color:#569CD6">                const</span><span style="color:#4FC1FF"> entry</span><span style="color:#D4D4D4"> = </span><span style="color:#9CDCFE">dataId</span><span style="color:#D4D4D4"> ? </span><span style="color:#DCDCAA">findManifestEntryById</span><span style="color:#D4D4D4">(</span><span style="color:#DCDCAA">String</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">dataId</span><span style="color:#D4D4D4">)) : </span><span style="color:#569CD6">undefined</span><span style="color:#D4D4D4">;</span></span>
 <span class="line"></span>
 <span class="line"></span>
 <span class="line"><span style="color:#6A9955">                //  -----  ocultar menus tipo navbar compact  -----</span></span>
 <span class="line"><span style="color:#DCDCAA">                $</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'.navbar__container'</span><span style="color:#D4D4D4">).</span><span style="color:#DCDCAA">slideUp</span><span style="color:#D4D4D4">();</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#6A9955">                //  -----  Cargar la ruta si existe  -----</span></span>
+<span class="line"><span style="color:#6A9955">                //  -----  Carga directa por data-route (import dinámico por nombre de archivo)  -----</span></span>
+<span class="line"><span style="color:#C586C0">                if</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">routeFile</span><span style="color:#D4D4D4">) {</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#C586C0">                    try</span><span style="color:#D4D4D4"> {</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#569CD6">                        const</span><span style="color:#4FC1FF"> route</span><span style="color:#D4D4D4"> = </span><span style="color:#C586C0">await</span><span style="color:#DCDCAA"> loadRouteModule</span><span style="color:#D4D4D4">(</span><span style="color:#DCDCAA">String</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">routeFile</span><span style="color:#D4D4D4">));</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#C586C0">                        if</span><span style="color:#D4D4D4"> (!</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">) {</span></span>
+<span class="line"><span style="color:#C586C0">                            await</span><span style="color:#DCDCAA"> loadNotFoundRoute</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'click'</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#C586C0">                            return</span><span style="color:#D4D4D4">;</span></span>
+<span class="line"><span style="color:#D4D4D4">                        }</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#C586C0">                        await</span><span style="color:#DCDCAA"> loadContent</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">, </span><span style="color:#CE9178">'click'</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#D4D4D4">                    } </span><span style="color:#C586C0">catch</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">) {</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#9CDCFE">                        console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">error</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'Error loadContent (click, data-route):'</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#DCDCAA">                        notifyRouteLoadError</span><span style="color:#D4D4D4">(</span><span style="color:#569CD6">undefined</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">, </span><span style="color:#CE9178">'click'</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#C586C0">                        await</span><span style="color:#DCDCAA"> loadNotFoundRoute</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'click'</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#D4D4D4">                    }</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#C586C0">                    return</span><span style="color:#D4D4D4">;</span></span>
+<span class="line"><span style="color:#D4D4D4">                }</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A9955">                //  -----  Cargar la ruta por data-id si existe en el manifest  -----</span></span>
 <span class="line"><span style="color:#C586C0">                if</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">entry</span><span style="color:#D4D4D4">) {</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#C586C0">                    try</span><span style="color:#D4D4D4"> {</span></span>
@@ -1772,6 +1917,8 @@
 <span class="line"><span style="color:#D4D4D4">                    } </span><span style="color:#C586C0">catch</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">) {</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#9CDCFE">                        console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">error</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'Error loadContent (click):'</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#DCDCAA">                        notifyRouteLoadError</span><span style="color:#D4D4D4">(</span><span style="color:#569CD6">undefined</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">, </span><span style="color:#CE9178">'click'</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#C586C0">                        await</span><span style="color:#DCDCAA"> loadNotFoundRoute</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'click'</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"><span style="color:#D4D4D4">                    }</span></span>
 <span class="line"><span style="color:#D4D4D4">                }</span></span>
 <span class="line"></span>
@@ -1795,11 +1942,38 @@
 <span class="line"><span style="color:#C586C0">                if</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">e</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">state</span><span style="color:#D4D4D4">?.</span><span style="color:#9CDCFE">favicon</span><span style="color:#D4D4D4">)</span></span>
 <span class="line"><span style="color:#DCDCAA">                    updateFavicon</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">e</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">state</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">favicon</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#6A9955">                /** </span><span style="color:#569CD6">@type</span><span style="color:#4EC9B0"> {string}</span><span style="color:#6A9955"> - `Ruta normalizada desde el state o la URL actual; usar state.path si está presente, si no usar location.pathname` */</span></span>
+<span class="line"><span style="color:#6A9955">                /** </span><span style="color:#569CD6">@type</span><span style="color:#4EC9B0"> {string|undefined}</span><span style="color:#6A9955"> - `Nombre del archivo de ruta guardado en el historial` */</span></span>
+<span class="line"><span style="color:#569CD6">                const</span><span style="color:#4FC1FF"> routeFile</span><span style="color:#D4D4D4"> = </span><span style="color:#9CDCFE">e</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">state</span><span style="color:#D4D4D4">?.</span><span style="color:#9CDCFE">routeFile</span><span style="color:#D4D4D4">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A9955">                /** </span><span style="color:#569CD6">@type</span><span style="color:#4EC9B0"> {string}</span><span style="color:#6A9955"> - `Ruta normalizada desde el state o la URL actual` */</span></span>
 <span class="line"><span style="color:#569CD6">                const</span><span style="color:#4FC1FF"> raw</span><span style="color:#D4D4D4"> = </span><span style="color:#9CDCFE">e</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">state</span><span style="color:#D4D4D4">?.</span><span style="color:#9CDCFE">path</span><span style="color:#D4D4D4"> ?? </span><span style="color:#9CDCFE">window</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">location</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">pathname</span><span style="color:#D4D4D4">;</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#6A9955">                /** </span><span style="color:#569CD6">@type</span><span style="color:#4EC9B0"> {RouteManifest|undefined}</span><span style="color:#6A9955"> - `Entrada de manifest para la URL actual` */</span></span>
 <span class="line"><span style="color:#569CD6">                const</span><span style="color:#4FC1FF"> entry</span><span style="color:#D4D4D4"> = </span><span style="color:#DCDCAA">findManifestEntryByPath</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">raw</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A9955">                //  -----  Importar directamente por routeFile si está en el state (más rápido, usa caché)  -----</span></span>
+<span class="line"><span style="color:#C586C0">                if</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">routeFile</span><span style="color:#D4D4D4">) {</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#C586C0">                    try</span><span style="color:#D4D4D4"> {</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#569CD6">                        const</span><span style="color:#4FC1FF"> route</span><span style="color:#D4D4D4"> = </span><span style="color:#C586C0">await</span><span style="color:#DCDCAA"> loadRouteModule</span><span style="color:#D4D4D4">(</span><span style="color:#DCDCAA">String</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">routeFile</span><span style="color:#D4D4D4">));</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#C586C0">                        if</span><span style="color:#D4D4D4"> (!</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">) {</span></span>
+<span class="line"><span style="color:#C586C0">                            await</span><span style="color:#DCDCAA"> loadNotFoundRoute</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'popstate'</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#C586C0">                            return</span><span style="color:#D4D4D4">;</span></span>
+<span class="line"><span style="color:#D4D4D4">                        }</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#C586C0">                        await</span><span style="color:#DCDCAA"> loadContent</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">route</span><span style="color:#D4D4D4">, </span><span style="color:#CE9178">'popstate'</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#D4D4D4">                    } </span><span style="color:#C586C0">catch</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">) {</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#9CDCFE">                        console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">error</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'Error loadContent (popstate, routeFile):'</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#DCDCAA">                        notifyRouteLoadError</span><span style="color:#D4D4D4">(</span><span style="color:#569CD6">undefined</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">, </span><span style="color:#CE9178">'popstate'</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#C586C0">                        await</span><span style="color:#DCDCAA"> loadNotFoundRoute</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'popstate'</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#D4D4D4">                    }</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#C586C0">                    return</span><span style="color:#D4D4D4">;</span></span>
+<span class="line"><span style="color:#D4D4D4">                }</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#6A9955">                //  ----- cargamos la ruta SIN empujar otra entrada en el historial  ---------</span></span>
 <span class="line"><span style="color:#6A9955">                //  ----- el navegador ya actualizó la URL y el state al navegar atrás/adelante  -----</span></span>
@@ -1820,6 +1994,8 @@
 <span class="line"><span style="color:#D4D4D4">                    } </span><span style="color:#C586C0">catch</span><span style="color:#D4D4D4"> (</span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">) {</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#9CDCFE">                        console</span><span style="color:#D4D4D4">.</span><span style="color:#DCDCAA">error</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'Error loadContent (popstate):'</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#DCDCAA">                        notifyRouteLoadError</span><span style="color:#D4D4D4">(</span><span style="color:#569CD6">undefined</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">err</span><span style="color:#D4D4D4">, </span><span style="color:#CE9178">'popstate'</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#C586C0">                        await</span><span style="color:#DCDCAA"> loadNotFoundRoute</span><span style="color:#D4D4D4">(</span><span style="color:#CE9178">'popstate'</span><span style="color:#D4D4D4">);</span></span>
 <span class="line"><span style="color:#D4D4D4">                    }</span></span>
 <span class="line"><span style="color:#D4D4D4">                }</span></span>
 <span class="line"></span>

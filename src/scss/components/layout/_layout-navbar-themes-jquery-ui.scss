@@ -19,6 +19,7 @@
     position: fixed;
     width: 100%;
     padding: 1rem;
+    padding-top: 0;
     display: none;
     flex-direction: column;
     justify-content: center;
@@ -37,6 +38,7 @@
         align-items: start;
         gap: 2rem;
         padding: 2rem;
+        padding-top: 0;
     }
 }
 

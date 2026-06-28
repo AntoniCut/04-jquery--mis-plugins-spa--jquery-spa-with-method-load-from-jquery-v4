@@ -110,6 +110,56 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
 
 
             /**
+             * ---------------------------------------------------
+             * -----  `collapsePathnameSlashes(pathname = '')`  -----
+             * ---------------------------------------------------
+             * - Colapsa barras duplicadas en un pathname del navegador.
+             * - Evita valores como `//mis-plugins-spa/...` que history API
+             *   interpreta como URL protocol-relative (origen distinto → SecurityError).
+             * @param {string} pathname - Pathname crudo
+             * @returns {string} - Pathname con una sola barra inicial
+             */
+            const collapsePathnameSlashes = (pathname = '') => {
+
+                let p = String(pathname || '');
+
+                if (!p)
+                    return '/';
+
+                p = p.replace(/\/+/g, '/');
+
+                if (!p.startsWith('/'))
+                    p = `/${p}`;
+
+                return p;
+
+            };
+
+
+            /**
+             * ---------------------------------------------------
+             * -----  `safeHistoryPathname(pathname = '')`  -----
+             * ---------------------------------------------------
+             * - Pathname seguro para history.pushState/replaceState (misma origin).
+             * @param {string} pathname - Pathname crudo o relativo
+             * @returns {string} - Pathname absoluto normalizado
+             */
+            const safeHistoryPathname = (pathname = '') => {
+
+                try {
+
+                    return new URL(collapsePathnameSlashes(pathname), location.origin).pathname;
+
+                } catch (e) {
+
+                    return collapsePathnameSlashes(pathname);
+
+                }
+
+            };
+
+
+            /**
              * -----------------------------------
              * -----  `normalize(raw = '')`  -----
              * -----------------------------------
@@ -129,9 +179,21 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                 /** @type {string} - `Cadena normalizada` */
                 let s = String(raw || '');
 
-                //  -----  quitar base si está presente  -----
-                if (base && s.startsWith(base))
-                    s = s.slice(base.length);
+                //  -----  colapsar slashes duplicados en pathnames absolutos del navegador  -----
+                if (s.startsWith('/'))
+                    s = collapsePathnameSlashes(s);
+
+                //  -----  quitar base si está presente (también con base/path colapsados)  -----
+                if (base) {
+
+                    const normalizedBase = collapsePathnameSlashes(base).replace(/\/$/, '');
+
+                    if (normalizedBase && s.startsWith(normalizedBase))
+                        s = s.slice(normalizedBase.length);
+                    else if (s.startsWith(base))
+                        s = s.slice(base.length);
+
+                }
 
                 //  -----  quitar leading/trailing slash  -----
                 s = s.replace(/^\/|\/$/g, '');
@@ -163,14 +225,17 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                 const trimmed = routePath ? `/${String(routePath).replace(/^\/|\/$/g, '')}` : '';
 
                 //  -----  Construir pathname absoluto y normalizado  -----
+                const absoluteBase = base.startsWith('/') ? base : `/${base}`;
+
                 try {
 
-                    return new URL(base + trimmed, location.origin).pathname;
+                    return safeHistoryPathname(new URL(absoluteBase + trimmed, location.origin).pathname);
 
                 } catch (e) {
 
                     //  -----  fallback básico  -----
-                    return (base + trimmed).replace(/\/\/+/g, '/');
+                    return safeHistoryPathname(absoluteBase + trimmed);
+
                 }
 
             };
@@ -952,7 +1017,7 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                 //  -----  'init'     lo gestiona externamente con replaceState       -----
                 //  -----  'popstate' ya viene actualizado por el navegador            -----
                 if (source === 'click'
-                    && stripTrailingSlash(window.location.pathname) !== stripTrailingSlash(newPathname)) {
+                    && stripTrailingSlash(safeHistoryPathname(window.location.pathname)) !== stripTrailingSlash(newPathname)) {
 
                     /** @type {RouteManifest|undefined} - `Entrada del manifest para guardar routeFile en el historial` */
                     const manifestEntry = findManifestEntryById(route.id);
@@ -1731,8 +1796,8 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
             const init = () => {
 
 
-                /** @type {string} - `Ruta normalizada actual (sin base ni barra final)` */
-                const initialPath = window.location.pathname;
+                /** @type {string} - `Pathname actual del navegador, normalizado para history API` */
+                const initialPath = safeHistoryPathname(window.location.pathname);
 
                 /** @type {RouteManifest|undefined} - `Entrada inicial del manifest` */
                 const entry = findManifestEntryByPath(initialPath);
@@ -1751,9 +1816,9 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
 
                             if (!route) {
                                 history.replaceState(
-                                    { id: null, path: window.location.pathname },
+                                    { id: null, path: initialPath },
                                     '',
-                                    window.location.pathname
+                                    initialPath
                                 );
                                 return;
                             }
@@ -1779,9 +1844,9 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                 loadNotFoundRoute('init');
 
                 history.replaceState(
-                    { id: null, path: window.location.pathname },
+                    { id: null, path: initialPath },
                     '',
-                    window.location.pathname
+                    initialPath
                 );
 
             };

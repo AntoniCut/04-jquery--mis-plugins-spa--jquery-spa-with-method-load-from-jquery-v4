@@ -6,7 +6,7 @@
 
 
 @use '../../base/variables' as var;
-
+@use '../../base/mixins' as mix;
 
 /*  
     --------------------------------------
@@ -39,6 +39,27 @@
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
+}
+
+.loader__title-main {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var.$color-primary;
+    text-align: center;
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.3);
+    -webkit-text-stroke: 0.5px black;
+
+    @include mix.mobile {
+        font-size: 2.5rem;
+    }
+
+    @include mix.tablet {
+        font-size: 3rem;
+    }
+
+    @include mix.desktop {
+        font-size: 3.5rem;
+    }
 }
 
 .spinner {
