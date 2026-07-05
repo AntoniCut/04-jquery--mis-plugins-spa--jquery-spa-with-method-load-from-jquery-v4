@@ -5,13 +5,16 @@
 */
 
 
-/** @typedef {import('../../../../types/index.js').ConfigOptionsSPA} ConfigOptionsSPA */
-/** @typedef {import('../../../../types/index.js').RouteManifest} RouteManifest */
-/** @typedef {import('../../../../types/index.js').RouteComponents} RouteComponents */
-/** @typedef {import('../../../../types/index.js').RouteScript} RouteScript */
-/** @typedef {import('../../../../types/index.js').RouteStyle} RouteStyle */
-/** @typedef {import('../../../../types/index.js').RouteLib} RouteLib */
-/** @typedef {import('../../../../types/index.js').Route} Route */
+//*  -----  Referencias de tipos  -----
+
+/// <reference path="../../../../types/config-options-spa.d.js" />
+/// <reference path="../../../../types/route-manifest.d.js" />
+/// <reference path="../../../../types/route-components.d.js" />
+/// <reference path="../../../../types/route-script.d.js" />
+/// <reference path="../../../../types/route-style.d.js" />
+/// <reference path="../../../../types/route-lib.d.js" />
+/// <reference path="../../../../types/route.d.js" />
+
 
 
 /**
@@ -43,11 +46,12 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
 
 
     /*
-        -------------------------------------------------------------------------------------
-        ----------  Función Anónima Autoejecutable que Encapsula el plugin jQuery  ----------
-        -------------------------------------------------------------------------------------
+        *  ---------------------------------------------------------------------------
+        *  -----  Función Anónima Autoejecutable que Encapsula el plugin jQuery  -----
+        *  ---------------------------------------------------------------------------
     */
 
+    
     (($) => {
 
 

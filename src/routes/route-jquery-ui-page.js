@@ -1,11 +1,12 @@
 /*
-    *  --------------------------------------------------------------------------------------------  *
+    *  -------------------------------------------------------------------------------  *
     *  -----  /route-jquery-ui-page.js  --  /src/routes/route-jquery-ui-page.js  -----  *
-    *  --------------------------------------------------------------------------------------------  *
+    *  -------------------------------------------------------------------------------  *
 */
 
 
 import { paths } from './paths.js';
+/// <reference path="../../types/route.d.js" />
 
 
 /** - Desestructuracion de paths */
@@ -23,7 +24,8 @@ const {
 } = paths;
 
 
-/** @type {import('../../types/index.js').Route} */
+
+/** @type {Route} */
 export const routeJqueryUiPage = {
         id: 'jqueryUiPage',
         favicon: `${favicon}/jquery-ui-icon.svg`,

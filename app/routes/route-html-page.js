@@ -6,6 +6,7 @@
 
 
 import { paths } from './paths.js';
+/// <reference path="../../types/route.d.js" />
 
 
 /** - Desestructuracion de paths */
@@ -23,7 +24,8 @@ const {
 } = paths;
 
 
-/** @type {import('../../types/index.js').Route} */
+
+/** @type {Route} */
 export const routeHtmlPage = {
         id: 'htmlPage',
         favicon: `${favicon}/html-icon.svg`,

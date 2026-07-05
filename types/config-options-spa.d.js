@@ -1,18 +1,17 @@
 /*
-    *  --------------------------------------------------------------------------------  *
-    *  -----  /config-option-spa-types.js  --  /types/config-option-spa-types.js  -----  *
-    *  --------------------------------------------------------------------------------  *
+    *  ------------------------------------------------------------------------  *
+    *  -----  /config-options-spa.d.js  --  /types/config-options-spa.d.js  -----  *
+    *  ------------------------------------------------------------------------  *
 */
 
 
-//  ----------  Esto asegura que VS Code lo trate como módulo  ----------
-export {};
-
-
-/** @typedef {import('./route-manifest.js').RouteManifest} RouteManifest */
+/// <reference path="./route-manifest.d.js" />
 
 
 /**
+ * --------------------------------
+ * -----  `ConfigOptionsSPA`  -----
+ * --------------------------------
  * @typedef {Object} ConfigOptionsSPA - Objeto que define la configuración para el plugin `spaWithMethodLoadFromJQuery`
  * @property {RouteManifest[]} [routeManifest] - Manifiesto ligero de rutas para lazy loading.
  * @property {string} [routeModulesBase] - Ruta base para importar dinamicamente los modulos de ruta.

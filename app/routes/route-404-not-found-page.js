@@ -6,7 +6,7 @@
 
 
 import { paths } from './paths.js';
-
+/// <reference path="../../types/route.d.js" />
 
 
 /** - Desestructuracion de paths */
@@ -24,7 +24,8 @@ const {
 } = paths;
 
 
-/** @type {import('../../types/index.js').Route} */
+
+/** @type {Route} */
 export const route404NotFoundPage = {
         id: '404NotFoundPage',
         favicon: `${favicon}/jquery-icon.svg`,

@@ -1,11 +1,12 @@
 /*
-    *  -----------------------------------------------------------------------------  *
+    *  -----------------------------------------------------------------------  *
     *  -----  /route-react-page.js  --  /src/routes/route-react-page.js  -----  *
-    *  -----------------------------------------------------------------------------  *
+    *  -----------------------------------------------------------------------  *
 */
 
 
 import { paths } from './paths.js';
+/// <reference path="../../types/route.d.js" />
 
 
 /** - Desestructuracion de paths */
@@ -23,7 +24,8 @@ const {
 } = paths;
 
 
-/** @type {import('../../types/index.js').Route} */
+
+/** @type {Route} */
 export const routeReactPage = {
         id: 'reactPage',
         favicon: `${favicon}/react-icon.svg`,

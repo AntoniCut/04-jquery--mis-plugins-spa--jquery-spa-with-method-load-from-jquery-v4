@@ -5,13 +5,13 @@
 */
 
 
+
 import { base } from '../main.js';
 import { routeManifest } from '../routes/route-manifest.js';
 import { loadJQueryUILib } from '../libs/jquery-module/loader/load-jquery-ui-by-import.js';
 
+/// <reference path="../../types/config-options-spa.d.js" />
 
-
-/** @typedef {import('../../types/index.js').ConfigOptionsSPA} ConfigOptionsSPA */
 
 
 /**
