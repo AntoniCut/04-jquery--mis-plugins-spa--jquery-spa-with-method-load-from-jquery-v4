@@ -1,119 +1,287 @@
 /*
-    *  ----------------------------------------------------------------------------------  *
-    *  -----  /html-page.esm.js  --  /src/scripts/js/pages/html-page.esm.js  -----  *
-    *  ----------------------------------------------------------------------------------  *
+    *  -----  /html-page.esm.js  --  /src/scripts/js/pages/html-page.esm.js  -----
     *
-    *  Script ESM (ES Modules) — Utilidades HTML exportadas como módulo nativo.
-    *  Usa import/export para organizar y reutilizar el código.
+    *  Script ESM (ES Modules) — Utilidades HTML5 exportadas como módulo nativo.
+    *  Renderiza contenido en html-demo.html tras la carga del plugin SPA V3.1.
 */
 
 
-//  -----  Constantes exportadas  -----
+/**
+ * -----  Características demo renderizadas por ESM  -----
+ * @typedef {Object} PageFeature
+ * @property {string} icon
+ * @property {string} title
+ * @property {string} text
+ */
+
+
+/**
+ * -----  Detalle del evento spa:route-loaded  -----
+ * @typedef {Object} RouteLoadedDetail
+ * @property {{ id?: string }} [route]
+ */
+
+
+//*  -----  Constantes exportadas  -----
 
 /** Versión del módulo */
 export const VERSION = '1.0.0';
 
-/** Lista de void elements en HTML5 */
-export const VOID_TAGS = Object.freeze([
-    'area', 'base', 'br', 'col', 'embed', 'hr',
-    'img', 'input', 'link', 'meta', 'param',
-    'source', 'track', 'wbr',
+/** Nombre del plugin SPA */
+export const PLUGIN_NAME = 'spa-loader-content-html';
+
+/** Versión del plugin SPA usada en la demo */
+export const PLUGIN_VERSION = '3.1';
+
+/** Etiquetas / conceptos renderizados por ESM */
+export const PAGE_TAGS = Object.freeze([
+    "header",
+    "nav",
+    "main",
+    "section",
+    "article",
+    "aside",
+    "footer",
+    "figure",
+    "figcaption",
+    "time"
 ]);
 
-/** Etiquetas semánticas de HTML5 */
-export const SEMANTIC_TAGS = Object.freeze([
-    'header', 'nav', 'main', 'section', 'article',
-    'aside', 'footer', 'figure', 'figcaption', 'mark',
-    'time', 'details', 'summary', 'dialog',
+/** Características demo renderizadas por ESM */
+export const PAGE_ESM_FEATURES = Object.freeze([
+    {
+        "icon": "🔗",
+        "title": "Atributos data-*",
+        "text": "Los contenedores del demo usan data-html-demo-target para el renderizado."
+    },
+    {
+        "icon": "🔄",
+        "title": "Fase 3 del plugin",
+        "text": "El módulo ESM se carga cuando pagesComponents ya inyectó html-demo.html."
+    },
+    {
+        "icon": "📡",
+        "title": "Evento spa:route-loaded",
+        "text": "Integración con el ciclo de vida del plugin SPA V3.1."
+    }
 ]);
 
 
-//  -----  Funciones exportadas  -----
 
-/**
- * Comprueba si una etiqueta es un void element (no necesita cierre).
- * @param {string} tag
- * @returns {boolean}
- */
-export function isVoidElement(tag) {
-    return VOID_TAGS.includes(tag.toLowerCase());
-}
+//*  -----  Funciones exportadas  -----
 
 
 /**
- * Comprueba si una etiqueta es semántica de HTML5.
- * @param {string} tag
- * @returns {boolean}
+ * -----------------------------------------------------------
+ * -----  `createFeatureArticle({ icon, title, text })`  -----
+ * -----------------------------------------------------------
+ * - Crea una tarjeta de feature para el grid del demo.
+ * @param {PageFeature} feature - Característica a renderizar
+ * @returns {HTMLElement} - Tarjeta de feature creada
  */
-export function isSemanticTag(tag) {
-    return SEMANTIC_TAGS.includes(tag.toLowerCase());
-}
+export const createFeatureArticle = ({ icon, title, text }) => {
+
+    /** @type {HTMLArticleElement} - Tarjeta de feature creada */
+    const article = document.createElement('article');
+    article.className = 'html-page__feature';
+
+    article.innerHTML = `
+        <span class="html-page__feature-icon" aria-hidden="true">${icon}</span>
+        <h4 class="html-page__feature-title">${title}</h4>
+        <p class="html-page__feature-text">${text}</p>
+    `;
+
+    return article;
+};
+
 
 
 /**
- * Genera un string de apertura de etiqueta HTML con sus atributos.
- * @param {string} tag
- * @param {Record<string, string>} [attrs]
- * @returns {string}
+ * ---------------------------------------------
+ * -----  `createTagItem(label)`  -----
+ * ---------------------------------------------
+ * - Crea un ítem de lista para tags o conceptos.
+ * @param {string} label - Texto del ítem
+ * @returns {HTMLLIElement} - Ítem de lista creado
  */
-export function openTag(tag, attrs = {}) {
-    const attrsStr = Object.entries(attrs)
-        .map(([key, val]) => ` ${key}="${val}"`)
-        .join('');
+export const createTagItem = (label) => {
 
-    return isVoidElement(tag)
-        ? `<${tag}${attrsStr} />`
-        : `<${tag}${attrsStr}>`;
-}
+    /** @type {HTMLLIElement} - Ítem de lista creado */
+    const item = document.createElement('li');
+    item.className = 'html-page__tag';
+    item.textContent = label;
+    item.title = label;
+
+    return item;
+};
+
 
 
 /**
- * Genera el string de cierre de una etiqueta HTML (si no es void).
- * @param {string} tag
- * @returns {string}
+ * ------------------------------------------------
+ * -----  `setDemoStatus(statusEl, message)`  -----
+ * ------------------------------------------------
+ * - Actualiza el mensaje de estado del bloque ESM.
+ * @param {Element|null} statusEl - Elemento de estado
+ * @param {string} message - Mensaje de estado
  */
-export function closeTag(tag) {
-    return isVoidElement(tag) ? '' : `</${tag}>`;
-}
+export const setDemoStatus = (statusEl, message) => {
+
+    if (!statusEl)
+        return;
+
+    statusEl.textContent = message;
+};
+
 
 
 /**
- * Envuelve contenido con una etiqueta HTML y sus atributos.
- * @param {string} tag
- * @param {string} content
- * @param {Record<string, string>} [attrs]
- * @returns {string}
+ * ---------------------------------------
+ * -----  `createRouteLoadedCard()`  -----
+ * ---------------------------------------
+ * - Tarjeta que escucha spa:route-loaded y muestra el id de la ruta activa.
+ * @returns {HTMLElement} - Tarjeta de integración SPA creada
  */
-export function wrapTag(tag, content, attrs = {}) {
-    return `${openTag(tag, attrs)}${content}${closeTag(tag)}`;
-}
+const createRouteLoadedCard = () => {
+
+    /** @type {HTMLArticleElement} - Tarjeta de integración SPA creada */
+    const article = document.createElement('article');
+    article.className = 'html-page__feature';
+
+    /** @type {HTMLParagraphElement} - Salida de texto del evento */
+    const output = document.createElement('p');
+    output.className = 'html-page__feature-text';
+    output.innerHTML = 'Esperando evento <code>spa:route-loaded</code>…';
+
+
+    /**
+     * ------------------------------------
+     * -----  `onRouteLoaded(event)`  -----
+     * ------------------------------------
+     * - Actualiza la tarjeta con el id de la ruta emitida por el plugin.
+     * @param {Event} event - Evento spa:route-loaded
+     */
+    const onRouteLoaded = (event) => {
+
+        /** @type {RouteLoadedDetail} - Detalle del evento spa:route-loaded */
+        const detail = /** @type {CustomEvent<RouteLoadedDetail>} */ (event).detail;
+
+        /** @type {string} - Id de la ruta activa */
+        const routeId = detail?.route?.id ?? 'desconocida';
+
+        output.innerHTML = `Evento recibido: ruta activa <code>${routeId}</code>`;
+    };
+
+    document.addEventListener('spa:route-loaded', onRouteLoaded, { once: true });
+
+    article.innerHTML = `
+        <span class="html-page__feature-icon" aria-hidden="true">📡</span>
+        <h4 class="html-page__feature-title">Integración SPA</h4>
+    `;
+    article.appendChild(output);
+
+    return article;
+};
+
 
 
 /**
- * Crea un elemento del DOM con atributos y texto opcionales.
- * @param {string} tag
- * @param {Record<string, string>} [attrs]
- * @param {string} [text]
- * @returns {HTMLElement}
+ * ------------------------------------
+ * -----  `renderPageDemoEsm()`  -----
+ * ------------------------------------
+ * - Renderiza las tarjetas ESM en html-demo.html.
  */
-export function createElement(tag, attrs = {}, text = '') {
-    const el = document.createElement(tag);
-    Object.entries(attrs).forEach(([key, val]) => el.setAttribute(key, val));
-    if (text) el.textContent = text;
-    return el;
-}
+export const renderPageDemoEsm = () => {
+
+    /** - Contenedor de las tarjetas ESM */
+    const target = document.querySelector('[data-html-demo-target="esm"]');
+
+    /** - Elemento de estado */
+    const status = document.querySelector('[data-html-demo-status="esm"]');
+
+    if (!target) {
+        console.warn('⚠️ html-page.esm.js: contenedor [data-html-demo-target="esm"] no encontrado.');
+        return;
+    }
+
+    /** - Fragmento de documento para insertar las tarjetas ESM */
+    const fragment = document.createDocumentFragment();
+
+    PAGE_ESM_FEATURES.forEach((feature) => {
+        fragment.appendChild(createFeatureArticle(feature));
+    });
+
+    fragment.appendChild(createRouteLoadedCard());
+
+    target.replaceChildren(fragment);
+
+    setDemoStatus(
+        status,
+        `Renderizado con html-page.esm.js (ESM) · ${PLUGIN_NAME} v${PLUGIN_VERSION} · v${VERSION} · ${new Date().toLocaleTimeString()}`
+    );
+
+    console.warn('-----  html-page.esm.js  -----  ES Module  -----');
+    console.log('Tarjetas ESM:', PAGE_ESM_FEATURES.length + 1);
+};
+
+
+
+/**
+ * ----------------------------------------
+ * -----  `renderPageTags()`  -----
+ * ----------------------------------------
+ * - Renderiza tags o conceptos en la lista del demo.
+ */
+export const renderPageTags = () => {
+
+    /** - Contenedor de tags / conceptos */
+    const target = document.querySelector('[data-html-demo-target="tags"]');
+
+    if (!target) {
+        console.warn('⚠️ html-page.esm.js: contenedor [data-html-demo-target="tags"] no encontrado.');
+        return;
+    }
+
+    /** - Fragmento de documento para insertar los ítems */
+    const fragment = document.createDocumentFragment();
+
+    PAGE_TAGS.forEach((label) => {
+        fragment.appendChild(createTagItem(label));
+    });
+
+    target.replaceChildren(fragment);
+};
+
+
+/**
+ * ------------------------
+ * -----  `mount()`  -----
+ * ------------------------
+ * - `Punto de montaje del módulo, invocado por el plugin en cada navegación (exportFunctionName: 'mount').`
+ * - `Al vivir el render dentro de una función (y NO en el nivel superior del módulo), el navegador puede`
+ * - `cachear el módulo y descargarlo una sola vez; el plugin re-renderiza llamando a mount() en cada`
+ * - `visita o retroceso del historial, sin re-descargar el archivo.`
+ * @returns {void}
+ */
+export const mount = () => {
+    renderPageDemoEsm();
+    renderPageTags();
+};
+
 
 
 //  -----  Export default  -----
 
 export default {
     VERSION,
-    VOID_TAGS,
-    SEMANTIC_TAGS,
-    isVoidElement,
-    isSemanticTag,
-    openTag,
-    closeTag,
-    wrapTag,
-    createElement,
+    PLUGIN_NAME,
+    PLUGIN_VERSION,
+    PAGE_TAGS,
+    PAGE_ESM_FEATURES,
+    createFeatureArticle,
+    createTagItem,
+    setDemoStatus,
+    renderPageDemoEsm,
+    renderPageTags,
+    mount,
 };

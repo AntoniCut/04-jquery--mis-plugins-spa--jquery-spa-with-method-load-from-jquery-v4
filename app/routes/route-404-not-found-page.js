@@ -8,6 +8,7 @@
 import { paths } from './paths.js';
 
 
+
 /** - Desestructuracion de paths */
 const {
     favicon,
@@ -17,11 +18,9 @@ const {
     layoutNavbar,
     layoutNavbarThemesUI,
     pages,
-    pagesComponents,
     layoutFooter,
     styles,
     scripts,
-    markdownShiki
 } = paths;
 
 
@@ -40,8 +39,6 @@ export const route404NotFoundPage = {
             "#layoutMain": `${pages}/404/404-not-found-page.html`,
             "#layoutFooter": layoutFooter,
         },
-        pagesComponents: [],
-        MarkdownShikiHtml: [],
         headerTitle: 'Página no encontrada - 404 Not Found Page',
         styles: [
             { href: `${styles}/pages/home.css` },

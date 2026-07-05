@@ -1,190 +1,276 @@
 /*
-    *  ---------------------------------------------------------------------------------------  *
-    *  -----  /javascript-page.esm.js  --  /src/scripts/js/pages/javascript-page.esm.js  -----  *
-    *  ---------------------------------------------------------------------------------------  *
+    *  -----  /javascript-page.esm.js  --  /src/scripts/js/pages/javascript-page.esm.js  -----
     *
-    *  Script ESM (ES Modules) — Patrones modernos de JavaScript ES6+.
-    *  Demuestra clases, generadores, async/await y patrones funcionales con export/import.
+    *  Script ESM (ES Modules) — Utilidades JavaScript exportadas como módulo nativo.
+    *  Renderiza contenido en javascript-demo.html tras la carga del plugin SPA V3.1.
 */
 
 
-//  -----  Constantes exportadas  -----
+/**
+ * -----  Características demo renderizadas por ESM  -----
+ * @typedef {Object} PageFeature
+ * @property {string} icon
+ * @property {string} title
+ * @property {string} text
+ */
+
+
+/**
+ * -----  Detalle del evento spa:route-loaded  -----
+ * @typedef {Object} RouteLoadedDetail
+ * @property {{ id?: string }} [route]
+ */
+
+
+//*  -----  Constantes exportadas  -----
 
 /** Versión del módulo */
 export const VERSION = '1.0.0';
 
-/** Características incorporadas en cada versión de ECMAScript */
-export const ES_VERSIONS = Object.freeze({
-    ES6:  ['let/const', 'Arrow Functions', 'Classes', 'Template Literals', 'Destructuring', 'Spread/Rest', 'Modules', 'Promises', 'Symbol', 'Map/Set'],
-    ES7:  ['Array.prototype.includes', 'Exponentiation operator (**)'],
-    ES8:  ['async/await', 'Object.entries/values', 'String padding', 'Trailing commas'],
-    ES9:  ['Rest/Spread for objects', 'Async iteration', 'Promise.finally', 'RegExp improvements'],
-    ES10: ['Array.flat/flatMap', 'Object.fromEntries', 'String.trimStart/trimEnd', 'Optional catch binding'],
-    ES11: ['Optional Chaining (?.)', 'Nullish Coalescing (??)', 'BigInt', 'Promise.allSettled', 'globalThis'],
-    ES12: ['Logical assignment (&&=, ||=, ??=)', 'Numeric separators (1_000)', 'Promise.any', 'String.replaceAll'],
-    ES13: ['Array.at()', 'Object.hasOwn()', 'Top-level await', 'Error.cause'],
-});
+/** Nombre del plugin SPA */
+export const PLUGIN_NAME = 'spa-loader-content-html';
+
+/** Versión del plugin SPA usada en la demo */
+export const PLUGIN_VERSION = '3.1';
+
+/** Etiquetas / conceptos renderizados por ESM */
+export const PAGE_TAGS = Object.freeze([
+    "let/const",
+    "arrow functions",
+    "classes",
+    "modules",
+    "promises",
+    "async/await",
+    "destructuring",
+    "spread",
+    "Map/Set",
+    "optional chaining"
+]);
+
+/** Características demo renderizadas por ESM */
+export const PAGE_ESM_FEATURES = Object.freeze([
+    {
+        "icon": "⚡",
+        "title": "ES Modules",
+        "text": "export/import nativos con clases, generadores y async/await."
+    },
+    {
+        "icon": "🔄",
+        "title": "Fase 3 del plugin",
+        "text": "Scripts secuenciales: CJS primero, ESM como type=module."
+    },
+    {
+        "icon": "📡",
+        "title": "Evento spa:route-loaded",
+        "text": "Tarjeta que confirma la ruta javascriptPage activa."
+    }
+]);
 
 
-//  -----  1. Closure funcional (ES6+)  -----
+
+//*  -----  Funciones exportadas  -----
+
 
 /**
- * Crea un contador encapsulado con estado privado (closure).
- * @param {number} [initial=0]
- * @returns {{ increment(): number, decrement(): number, reset(): number, value(): number }}
+ * -----------------------------------------------------------
+ * -----  `createFeatureArticle({ icon, title, text })`  -----
+ * -----------------------------------------------------------
+ * - Crea una tarjeta de feature para el grid del demo.
+ * @param {PageFeature} feature - Característica a renderizar
+ * @returns {HTMLElement} - Tarjeta de feature creada
  */
-export const makeCounter = (initial = 0) => {
-    let _count = initial;
+export const createFeatureArticle = ({ icon, title, text }) => {
 
-    return {
-        increment: () => ++_count,
-        decrement: () => --_count,
-        reset:     () => { _count = 0; return _count; },
-        value:     () => _count,
-    };
+    /** @type {HTMLArticleElement} - Tarjeta de feature creada */
+    const article = document.createElement('article');
+    article.className = 'js-page__feature';
+
+    article.innerHTML = `
+        <span class="js-page__feature-icon" aria-hidden="true">${icon}</span>
+        <h4 class="js-page__feature-title">${title}</h4>
+        <p class="js-page__feature-text">${text}</p>
+    `;
+
+    return article;
 };
 
 
-//  -----  2. EventEmitter (clase ES6)  -----
 
 /**
- * Emisor de eventos simple basado en clases ES6.
+ * ---------------------------------------------
+ * -----  `createTagItem(label)`  -----
+ * ---------------------------------------------
+ * - Crea un ítem de lista para tags o conceptos.
+ * @param {string} label - Texto del ítem
+ * @returns {HTMLLIElement} - Ítem de lista creado
  */
-export class EventEmitter {
+export const createTagItem = (label) => {
 
-    #events = new Map();
+    /** @type {HTMLLIElement} - Ítem de lista creado */
+    const item = document.createElement('li');
+    item.className = 'js-page__tag';
+    item.textContent = label;
+    item.title = label;
 
-    /**
-     * Suscribe un listener a un evento.
-     * @param {string} event
-     * @param {Function} listener
-     * @returns {this}
-     */
-    on(event, listener) {
-        if (!this.#events.has(event)) this.#events.set(event, []);
-        this.#events.get(event).push(listener);
-        return this;
-    }
+    return item;
+};
 
-    /**
-     * Elimina un listener de un evento.
-     * @param {string} event
-     * @param {Function} listener
-     * @returns {this}
-     */
-    off(event, listener) {
-        if (!this.#events.has(event)) return this;
-        this.#events.set(event, this.#events.get(event).filter((l) => l !== listener));
-        return this;
-    }
-
-    /**
-     * Emite un evento con los argumentos dados.
-     * @param {string} event
-     * @param {...any} args
-     * @returns {boolean}
-     */
-    emit(event, ...args) {
-        if (!this.#events.has(event)) return false;
-        this.#events.get(event).forEach((l) => l(...args));
-        return true;
-    }
-
-    /**
-     * Devuelve el número de listeners de un evento.
-     * @param {string} event
-     * @returns {number}
-     */
-    listenerCount(event) {
-        return this.#events.get(event)?.length ?? 0;
-    }
-}
-
-
-//  -----  3. Composición funcional (pipe)  -----
-
-/**
- * Compone funciones de izquierda a derecha (pipe).
- * @param {...Function} fns
- * @returns {Function}
- */
-export const pipe = (...fns) => (value) => fns.reduce((acc, fn) => fn(acc), value);
 
 
 /**
- * Compone funciones de derecha a izquierda (compose).
- * @param {...Function} fns
- * @returns {Function}
+ * ------------------------------------------------
+ * -----  `setDemoStatus(statusEl, message)`  -----
+ * ------------------------------------------------
+ * - Actualiza el mensaje de estado del bloque ESM.
+ * @param {Element|null} statusEl - Elemento de estado
+ * @param {string} message - Mensaje de estado
  */
-export const compose = (...fns) => (value) => fns.reduceRight((acc, fn) => fn(acc), value);
+export const setDemoStatus = (statusEl, message) => {
+
+    if (!statusEl)
+        return;
+
+    statusEl.textContent = message;
+};
 
 
-//  -----  4. Memoización  -----
 
 /**
- * Memoriza el resultado de una función pura para optimizar llamadas repetidas.
- * @template T
- * @param {(...args: any[]) => T} fn
- * @returns {(...args: any[]) => T}
+ * ---------------------------------------
+ * -----  `createRouteLoadedCard()`  -----
+ * ---------------------------------------
+ * - Tarjeta que escucha spa:route-loaded y muestra el id de la ruta activa.
+ * @returns {HTMLElement} - Tarjeta de integración SPA creada
  */
-export function memoize(fn) {
-    const cache = new Map();
+const createRouteLoadedCard = () => {
 
-    return (...args) => {
-        const key = JSON.stringify(args);
-        if (cache.has(key)) return cache.get(key);
-        const result = fn(...args);
-        cache.set(key, result);
-        return result;
+    /** @type {HTMLArticleElement} - Tarjeta de integración SPA creada */
+    const article = document.createElement('article');
+    article.className = 'js-page__feature';
+
+    /** @type {HTMLParagraphElement} - Salida de texto del evento */
+    const output = document.createElement('p');
+    output.className = 'js-page__feature-text';
+    output.innerHTML = 'Esperando evento <code>spa:route-loaded</code>…';
+
+
+    /**
+     * ------------------------------------
+     * -----  `onRouteLoaded(event)`  -----
+     * ------------------------------------
+     * - Actualiza la tarjeta con el id de la ruta emitida por el plugin.
+     * @param {Event} event - Evento spa:route-loaded
+     */
+    const onRouteLoaded = (event) => {
+
+        /** @type {RouteLoadedDetail} - Detalle del evento spa:route-loaded */
+        const detail = /** @type {CustomEvent<RouteLoadedDetail>} */ (event).detail;
+
+        /** @type {string} - Id de la ruta activa */
+        const routeId = detail?.route?.id ?? 'desconocida';
+
+        output.innerHTML = `Evento recibido: ruta activa <code>${routeId}</code>`;
     };
-}
+
+    document.addEventListener('spa:route-loaded', onRouteLoaded, { once: true });
+
+    article.innerHTML = `
+        <span class="js-page__feature-icon" aria-hidden="true">📡</span>
+        <h4 class="js-page__feature-title">Integración SPA</h4>
+    `;
+    article.appendChild(output);
+
+    return article;
+};
 
 
-//  -----  5. Generador de IDs únicos  -----
-
-/**
- * Generador infinito de IDs únicos con prefijo.
- * @param {string} [prefix='id']
- * @returns {Generator<string>}
- */
-export function* idGenerator(prefix = 'id') {
-    let i = 1;
-    while (true) {
-        yield `${prefix}-${String(i++).padStart(4, '0')}`;
-    }
-}
-
-
-//  -----  6. Fetch helper con async/await  -----
 
 /**
- * Realiza un GET a una URL y devuelve los datos JSON.
- * Lanza un error si la respuesta no es OK.
- * @param {string} url
- * @param {RequestInit} [options]
- * @returns {Promise<unknown>}
+ * ------------------------------------
+ * -----  `renderPageDemoEsm()`  -----
+ * ------------------------------------
+ * - Renderiza las tarjetas ESM en javascript-demo.html.
  */
-export async function fetchJSON(url, options = {}) {
-    const response = await fetch(url, { ...options, headers: { 'Content-Type': 'application/json', ...options.headers } });
+export const renderPageDemoEsm = () => {
 
-    if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText} — ${url}`);
+    /** - Contenedor de las tarjetas ESM */
+    const target = document.querySelector('[data-js-demo-target="esm"]');
+
+    /** - Elemento de estado */
+    const status = document.querySelector('[data-js-demo-status="esm"]');
+
+    if (!target) {
+        console.warn('⚠️ javascript-page.esm.js: contenedor [data-js-demo-target="esm"] no encontrado.');
+        return;
     }
 
-    return response.json();
-}
+    /** - Fragmento de documento para insertar las tarjetas ESM */
+    const fragment = document.createDocumentFragment();
+
+    PAGE_ESM_FEATURES.forEach((feature) => {
+        fragment.appendChild(createFeatureArticle(feature));
+    });
+
+    fragment.appendChild(createRouteLoadedCard());
+
+    target.replaceChildren(fragment);
+
+    setDemoStatus(
+        status,
+        `Renderizado con javascript-page.esm.js (ESM) · ${PLUGIN_NAME} v${PLUGIN_VERSION} · v${VERSION} · ${new Date().toLocaleTimeString()}`
+    );
+
+    console.warn('-----  javascript-page.esm.js  -----  ES Module  -----');
+    console.log('Tarjetas ESM:', PAGE_ESM_FEATURES.length + 1);
+};
+
+
+
+/**
+ * ----------------------------------------
+ * -----  `renderPageTags()`  -----
+ * ----------------------------------------
+ * - Renderiza tags o conceptos en la lista del demo.
+ */
+export const renderPageTags = () => {
+
+    /** - Contenedor de tags / conceptos */
+    const target = document.querySelector('[data-js-demo-target="tags"]');
+
+    if (!target) {
+        console.warn('⚠️ javascript-page.esm.js: contenedor [data-js-demo-target="tags"] no encontrado.');
+        return;
+    }
+
+    /** - Fragmento de documento para insertar los ítems */
+    const fragment = document.createDocumentFragment();
+
+    PAGE_TAGS.forEach((label) => {
+        fragment.appendChild(createTagItem(label));
+    });
+
+    target.replaceChildren(fragment);
+};
+
+
+//  -----  Inicialización del demo (Fase 3 — DOM ya mutado)  -----
+
+renderPageDemoEsm();
+renderPageTags();
+
 
 
 //  -----  Export default  -----
 
 export default {
     VERSION,
-    ES_VERSIONS,
-    makeCounter,
-    EventEmitter,
-    pipe,
-    compose,
-    memoize,
-    idGenerator,
-    fetchJSON,
+    PLUGIN_NAME,
+    PLUGIN_VERSION,
+    PAGE_TAGS,
+    PAGE_ESM_FEATURES,
+    createFeatureArticle,
+    createTagItem,
+    setDemoStatus,
+    renderPageDemoEsm,
+    renderPageTags,
 };

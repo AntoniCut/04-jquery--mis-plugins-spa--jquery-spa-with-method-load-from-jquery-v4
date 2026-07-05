@@ -1,132 +1,288 @@
 /*
-    *  ---------------------------------------------------------------------------------  *
-    *  -----  /css-page.esm.js  --  /src/scripts/js/pages/css-page.esm.js  -----  *
-    *  ---------------------------------------------------------------------------------  *
+    *  -----  /css-page.esm.js  --  /src/scripts/js/pages/css-page.esm.js  -----
     *
-    *  Script ESM (ES Modules) — Utilidades CSS exportadas como módulo nativo.
-    *  Organiza lógica de estilos en funciones reutilizables con import/export.
+    *  Script ESM (ES Modules) — Utilidades CSS3 exportadas como módulo nativo.
+    *  Renderiza contenido en css-demo.html tras la carga del plugin SPA V3.1.
 */
 
 
-//  -----  Constantes exportadas  -----
+/**
+ * -----  Características demo renderizadas por ESM  -----
+ * @typedef {Object} PageFeature
+ * @property {string} icon
+ * @property {string} title
+ * @property {string} text
+ */
+
+
+/**
+ * -----  Detalle del evento spa:route-loaded  -----
+ * @typedef {Object} RouteLoadedDetail
+ * @property {{ id?: string }} [route]
+ */
+
+
+//*  -----  Constantes exportadas  -----
 
 /** Versión del módulo */
 export const VERSION = '1.0.0';
 
-/** Unidades CSS válidas */
-export const CSS_UNITS = Object.freeze([
-    'px', 'rem', 'em', '%', 'vw', 'vh',
-    'vmin', 'vmax', 'ch', 'fr', 'dvh', 'dvw',
+/** Nombre del plugin SPA */
+export const PLUGIN_NAME = 'spa-loader-content-html';
+
+/** Versión del plugin SPA usada en la demo */
+export const PLUGIN_VERSION = '3.1';
+
+/** Etiquetas / conceptos renderizados por ESM */
+export const PAGE_TAGS = Object.freeze([
+    "display",
+    "flex",
+    "grid",
+    "position",
+    "margin",
+    "padding",
+    "color",
+    "background",
+    "transition",
+    "animation",
+    "@media"
 ]);
 
-/** Propiedades CSS que aceptan transición */
-export const ANIMATABLE_PROPERTIES = Object.freeze([
-    'opacity', 'transform', 'color', 'background-color',
-    'border-color', 'box-shadow', 'width', 'height',
-    'margin', 'padding', 'font-size', 'letter-spacing',
+/** Características demo renderizadas por ESM */
+export const PAGE_ESM_FEATURES = Object.freeze([
+    {
+        "icon": "🎨",
+        "title": "Custom Properties",
+        "text": "ESM exporta utilidades para leer y escribir variables CSS con get/set."
+    },
+    {
+        "icon": "🔄",
+        "title": "Fase 3 del plugin",
+        "text": "applyRouteMetaAsync carga este módulo tras la View Transition."
+    },
+    {
+        "icon": "📡",
+        "title": "Evento spa:route-loaded",
+        "text": "Escucha el evento del plugin para confirmar la ruta activa."
+    }
 ]);
 
 
-//  -----  Funciones exportadas  -----
+
+//*  -----  Funciones exportadas  -----
+
 
 /**
- * Calcula la especificidad de un selector CSS simple.
- * @param {string} selector
- * @returns {{ ids: number, classes: number, tags: number, toString(): string }}
+ * -----------------------------------------------------------
+ * -----  `createFeatureArticle({ icon, title, text })`  -----
+ * -----------------------------------------------------------
+ * - Crea una tarjeta de feature para el grid del demo.
+ * @param {PageFeature} feature - Característica a renderizar
+ * @returns {HTMLElement} - Tarjeta de feature creada
  */
-export function calcSpecificity(selector) {
-    const ids     = (selector.match(/#[\w-]+/g) ?? []).length;
-    const classes = (selector.match(/\.[\w-]+|\[[\w\s=~|^$*"'-]+\]|:[\w-]+(?!\()/g) ?? []).length;
-    const tags    = (selector.match(/(?:^|[\s>+~])[\w-]+|:{2}[\w-]+/g) ?? []).length;
+export const createFeatureArticle = ({ icon, title, text }) => {
 
-    return {
-        ids,
-        classes,
-        tags,
-        toString: () => `(${ids},${classes},${tags})`,
+    /** @type {HTMLArticleElement} - Tarjeta de feature creada */
+    const article = document.createElement('article');
+    article.className = 'css-page__feature';
+
+    article.innerHTML = `
+        <span class="css-page__feature-icon" aria-hidden="true">${icon}</span>
+        <h4 class="css-page__feature-title">${title}</h4>
+        <p class="css-page__feature-text">${text}</p>
+    `;
+
+    return article;
+};
+
+
+
+/**
+ * ---------------------------------------------
+ * -----  `createTagItem(label)`  -----
+ * ---------------------------------------------
+ * - Crea un ítem de lista para tags o conceptos.
+ * @param {string} label - Texto del ítem
+ * @returns {HTMLLIElement} - Ítem de lista creado
+ */
+export const createTagItem = (label) => {
+
+    /** @type {HTMLLIElement} - Ítem de lista creado */
+    const item = document.createElement('li');
+    item.className = 'css-page__tag';
+    item.textContent = label;
+    item.title = label;
+
+    return item;
+};
+
+
+
+/**
+ * ------------------------------------------------
+ * -----  `setDemoStatus(statusEl, message)`  -----
+ * ------------------------------------------------
+ * - Actualiza el mensaje de estado del bloque ESM.
+ * @param {Element|null} statusEl - Elemento de estado
+ * @param {string} message - Mensaje de estado
+ */
+export const setDemoStatus = (statusEl, message) => {
+
+    if (!statusEl)
+        return;
+
+    statusEl.textContent = message;
+};
+
+
+
+/**
+ * ---------------------------------------
+ * -----  `createRouteLoadedCard()`  -----
+ * ---------------------------------------
+ * - Tarjeta que escucha spa:route-loaded y muestra el id de la ruta activa.
+ * @returns {HTMLElement} - Tarjeta de integración SPA creada
+ */
+const createRouteLoadedCard = () => {
+
+    /** @type {HTMLArticleElement} - Tarjeta de integración SPA creada */
+    const article = document.createElement('article');
+    article.className = 'css-page__feature';
+
+    /** @type {HTMLParagraphElement} - Salida de texto del evento */
+    const output = document.createElement('p');
+    output.className = 'css-page__feature-text';
+    output.innerHTML = 'Esperando evento <code>spa:route-loaded</code>…';
+
+
+    /**
+     * ------------------------------------
+     * -----  `onRouteLoaded(event)`  -----
+     * ------------------------------------
+     * - Actualiza la tarjeta con el id de la ruta emitida por el plugin.
+     * @param {Event} event - Evento spa:route-loaded
+     */
+    const onRouteLoaded = (event) => {
+
+        /** @type {RouteLoadedDetail} - Detalle del evento spa:route-loaded */
+        const detail = /** @type {CustomEvent<RouteLoadedDetail>} */ (event).detail;
+
+        /** @type {string} - Id de la ruta activa */
+        const routeId = detail?.route?.id ?? 'desconocida';
+
+        output.innerHTML = `Evento recibido: ruta activa <code>${routeId}</code>`;
     };
-}
 
+    document.addEventListener('spa:route-loaded', onRouteLoaded, { once: true });
 
-/**
- * Convierte camelCase a kebab-case (propiedad CSS).
- * @param {string} str
- * @returns {string}
- */
-export function toKebabCase(str) {
-    return str.replace(/([A-Z])/g, (m) => `-${m.toLowerCase()}`);
-}
+    article.innerHTML = `
+        <span class="css-page__feature-icon" aria-hidden="true">📡</span>
+        <h4 class="css-page__feature-title">Integración SPA</h4>
+    `;
+    article.appendChild(output);
 
+    return article;
+};
 
-/**
- * Convierte un nombre de variable a CSS Custom Property.
- * @param {string} name  - Nombre en camelCase o kebab-case.
- * @param {string|number} value
- * @returns {string}
- */
-export function toCSSCustomProperty(name, value) {
-    const prop = '--' + toKebabCase(name).replace(/^-/, '');
-    return `${prop}: ${value};`;
-}
 
 
 /**
- * Comprueba si una unidad CSS es válida.
- * @param {string} unit
- * @returns {boolean}
+ * ------------------------------------
+ * -----  `renderPageDemoEsm()`  -----
+ * ------------------------------------
+ * - Renderiza las tarjetas ESM en css-demo.html.
  */
-export function isValidUnit(unit) {
-    return CSS_UNITS.includes(unit);
-}
+export const renderPageDemoEsm = () => {
+
+    /** - Contenedor de las tarjetas ESM */
+    const target = document.querySelector('[data-css-demo-target="esm"]');
+
+    /** - Elemento de estado */
+    const status = document.querySelector('[data-css-demo-status="esm"]');
+
+    if (!target) {
+        console.warn('⚠️ css-page.esm.js: contenedor [data-css-demo-target="esm"] no encontrado.');
+        return;
+    }
+
+    /** - Fragmento de documento para insertar las tarjetas ESM */
+    const fragment = document.createDocumentFragment();
+
+    PAGE_ESM_FEATURES.forEach((feature) => {
+        fragment.appendChild(createFeatureArticle(feature));
+    });
+
+    fragment.appendChild(createRouteLoadedCard());
+
+    target.replaceChildren(fragment);
+
+    setDemoStatus(
+        status,
+        `Renderizado con css-page.esm.js (ESM) · ${PLUGIN_NAME} v${PLUGIN_VERSION} · v${VERSION} · ${new Date().toLocaleTimeString()}`
+    );
+
+    console.warn('-----  css-page.esm.js  -----  ES Module  -----');
+    console.log('Tarjetas ESM:', PAGE_ESM_FEATURES.length + 1);
+};
+
 
 
 /**
- * Convierte un objeto de estilos JS (camelCase) a string CSS inline.
- * @param {Record<string, string | number>} styles
- * @returns {string}
+ * ----------------------------------------
+ * -----  `renderPageTags()`  -----
+ * ----------------------------------------
+ * - Renderiza tags o conceptos en la lista del demo.
  */
-export function stylesToString(styles) {
-    return Object.entries(styles)
-        .map(([prop, val]) => `${toKebabCase(prop)}: ${val}`)
-        .join('; ') + ';';
-}
+export const renderPageTags = () => {
+
+    /** - Contenedor de tags / conceptos */
+    const target = document.querySelector('[data-css-demo-target="tags"]');
+
+    if (!target) {
+        console.warn('⚠️ css-page.esm.js: contenedor [data-css-demo-target="tags"] no encontrado.');
+        return;
+    }
+
+    /** - Fragmento de documento para insertar los ítems */
+    const fragment = document.createDocumentFragment();
+
+    PAGE_TAGS.forEach((label) => {
+        fragment.appendChild(createTagItem(label));
+    });
+
+    target.replaceChildren(fragment);
+};
 
 
 /**
- * Lee el valor de una CSS Custom Property en un elemento.
- * @param {string} prop - Nombre incluyendo "--" o sin él.
- * @param {HTMLElement} [el]
- * @returns {string}
+ * ------------------------
+ * -----  `mount()`  -----
+ * ------------------------
+ * - `Punto de montaje del módulo, invocado por el plugin en cada navegación (exportFunctionName: 'mount').`
+ * - `Al vivir el render dentro de una función (y NO en el nivel superior del módulo), el navegador puede`
+ * - `cachear el módulo y descargarlo una sola vez; el plugin re-renderiza llamando a mount() en cada`
+ * - `visita o retroceso del historial, sin re-descargar el archivo.`
+ * @returns {void}
  */
-export function getCSSVar(prop, el = document.documentElement) {
-    const name = prop.startsWith('--') ? prop : `--${prop}`;
-    return getComputedStyle(el).getPropertyValue(name).trim();
-}
+export const mount = () => {
+    renderPageDemoEsm();
+    renderPageTags();
+};
 
-
-/**
- * Establece el valor de una CSS Custom Property en un elemento.
- * @param {string} prop
- * @param {string|number} value
- * @param {HTMLElement} [el]
- */
-export function setCSSVar(prop, value, el = document.documentElement) {
-    const name = prop.startsWith('--') ? prop : `--${prop}`;
-    el.style.setProperty(name, String(value));
-}
 
 
 //  -----  Export default  -----
 
 export default {
     VERSION,
-    CSS_UNITS,
-    ANIMATABLE_PROPERTIES,
-    calcSpecificity,
-    toKebabCase,
-    toCSSCustomProperty,
-    isValidUnit,
-    stylesToString,
-    getCSSVar,
-    setCSSVar,
+    PLUGIN_NAME,
+    PLUGIN_VERSION,
+    PAGE_TAGS,
+    PAGE_ESM_FEATURES,
+    createFeatureArticle,
+    createTagItem,
+    setDemoStatus,
+    renderPageDemoEsm,
+    renderPageTags,
+    mount,
 };

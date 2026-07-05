@@ -17,11 +17,9 @@ const {
     layoutNavbar,
     layoutNavbarThemesUI,
     pages,
-    pagesComponents,
     layoutFooter,
     styles,
     scripts,
-    markdownShiki
 } = paths;
 
 
@@ -40,15 +38,6 @@ export const routeHome = {
             "#layoutMain": `${pages}/home.html`,
             "#layoutFooter": layoutFooter,
         },
-        pagesComponents: [
-            { url: `${pagesComponents}/home.html`, target: '[data-component-page="home"]' },
-        ],
-        MarkdownShikiHtml: [
-            { 
-                url: `${markdownShiki}/plugins/spa-with-method-load-from-jquery/v4/jquery.spa-with-method-load-from-jquery-js.html`, 
-                target: '[data-shiki="codeEsmJs"]' 
-            }
-        ],
         headerTitle: 'Plugin jQuery SPA With Method Load From jQuery v4',
         styles: [
             { href: `${styles}/pages/home.css` },

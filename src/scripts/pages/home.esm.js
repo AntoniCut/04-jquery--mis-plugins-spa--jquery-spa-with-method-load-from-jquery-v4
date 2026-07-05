@@ -1,118 +1,259 @@
 /*
-    *  -------------------------------------------------------------------------  *
-    *  -----  /home.esm.js  --  /src/scripts/js/pages/home.esm.js  -----  *
-    *  -------------------------------------------------------------------------  *
+    *  -----  /home.esm.js  --  /src/scripts/js/pages/home.esm.js  -----
     *
-    *  Script ESM (ES Modules) — Utilidades para spa-loader-content-html exportadas
-    *  como módulo nativo. Helpers para construir y validar configuraciones SPA.
+    *  Script ESM (ES Modules) — Utilidades spa-loader-content-html exportadas como módulo nativo.
+    *  Renderiza contenido en home-demo.html tras la carga del plugin SPA V3.1.
 */
 
 
-//  -----  Constantes exportadas  -----
+/**
+ * -----  Características demo renderizadas por ESM  -----
+ * @typedef {Object} PageFeature
+ * @property {string} icon
+ * @property {string} title
+ * @property {string} text
+ */
 
-/** Versión del plugin */
-export const VERSION = '3.0.0';
 
-/** Nombre del plugin */
+/**
+ * -----  Detalle del evento spa:route-loaded  -----
+ * @typedef {Object} RouteLoadedDetail
+ * @property {{ id?: string }} [route]
+ */
+
+
+//*  -----  Constantes exportadas  -----
+
+/** Versión del módulo */
+export const VERSION = '1.0.0';
+
+/** Nombre del plugin SPA */
 export const PLUGIN_NAME = 'spa-loader-content-html';
 
-/** Eventos personalizados emitidos por el plugin */
-export const SPA_EVENTS = Object.freeze({
-    ROUTE_LOADED:       'spa:route-loaded',
-    FIRST_ROUTE_LOADED: 'spa:first-route-loaded',
-    ROUTE_LOAD_ERROR:   'spa:route-load-error',
-});
+/** Versión del plugin SPA usada en la demo */
+export const PLUGIN_VERSION = '3.1';
 
+/** Etiquetas / conceptos renderizados por ESM */
+export const PAGE_TAGS = Object.freeze([
+    "spa:route-loaded",
+    "spa:first-route-loaded",
+    "spa:route-load-error",
+    "applyRouteMetaAsync",
+    "pagesComponents",
+    "View Transitions"
+]);
 
-//  -----  Funciones exportadas  -----
-
-/**
- * Crea una entrada de manifiesto de ruta con valores validados.
- * @param {string} id   - Identificador único de la ruta.
- * @param {string} path - Segmento de ruta (sin slash inicial).
- * @param {string} file - Nombre del archivo de módulo (sin extensión).
- * @returns {{ id: string, path: string, file: string }}
- */
-export function createManifestEntry(id, path, file) {
-    if (!id || !file) throw new Error('createManifestEntry: id y file son obligatorios.');
-    return { id: String(id), path: String(path ?? ''), file: String(file) };
-}
-
-
-/**
- * Construye el pathname absoluto para la SPA dado un base y un path de ruta.
- * @param {string} base      - Base configurada (ej: '/mis-plugins-spa/v3').
- * @param {string} routePath - Segmento de ruta (puede estar vacío para home).
- * @returns {string}
- */
-export function buildSpaPathname(base, routePath) {
-    const cleanBase = (base || '').replace(/\/$/, '');
-    const segment   = routePath ? `/${String(routePath).replace(/^\/|\/$/g, '')}` : '';
-    try {
-        return new URL(cleanBase + segment, location.origin).pathname;
-    } catch {
-        return (cleanBase + segment).replace(/\/\/+/g, '/') || '/';
+/** Características demo renderizadas por ESM */
+export const PAGE_ESM_FEATURES = Object.freeze([
+    {
+        "icon": "📡",
+        "title": "Eventos SPA",
+        "text": "Constantes y helpers exportados como ES Module nativo."
+    },
+    {
+        "icon": "🔄",
+        "title": "Fase 3 del plugin",
+        "text": "Scripts tras inyectar home-demo.html en el DOM."
+    },
+    {
+        "icon": "🧭",
+        "title": "Manifiesto de rutas",
+        "text": "Helpers para construir y validar entradas del routeManifest."
     }
-}
+]);
+
+
+
+//*  -----  Funciones exportadas  -----
 
 
 /**
- * Normaliza una ruta quitando el prefijo base y los slashes extremos.
- * @param {string} raw  - Pathname sin normalizar (ej: window.location.pathname).
- * @param {string} base - Base de la SPA.
- * @returns {string}
+ * -----------------------------------------------------------
+ * -----  `createFeatureArticle({ icon, title, text })`  -----
+ * -----------------------------------------------------------
+ * - Crea una tarjeta de feature para el grid del demo.
+ * @param {PageFeature} feature - Característica a renderizar
+ * @returns {HTMLElement} - Tarjeta de feature creada
  */
-export function normalizeSpaPath(raw, base) {
-    let path = String(raw || '');
-    const cleanBase = String(base || '');
-    if (cleanBase && path.startsWith(cleanBase))
-        path = path.slice(cleanBase.length);
-    return path.replace(/^\/|\/$/g, '');
-}
+export const createFeatureArticle = ({ icon, title, text }) => {
+
+    /** @type {HTMLArticleElement} - Tarjeta de feature creada */
+    const article = document.createElement('article');
+    article.className = 'home-page__feature';
+
+    article.innerHTML = `
+        <span class="home-page__feature-icon" aria-hidden="true">${icon}</span>
+        <h4 class="home-page__feature-title">${title}</h4>
+        <p class="home-page__feature-text">${text}</p>
+    `;
+
+    return article;
+};
+
 
 
 /**
- * Comprueba si un href corresponde a una navegación interna de la SPA.
- * @param {string} href - href del enlace a evaluar.
- * @param {string} base - Base de la SPA.
- * @returns {boolean}
+ * ---------------------------------------------
+ * -----  `createTagItem(label)`  -----
+ * ---------------------------------------------
+ * - Crea un ítem de lista para tags o conceptos.
+ * @param {string} label - Texto del ítem
+ * @returns {HTMLLIElement} - Ítem de lista creado
  */
-export function isSpaLink(href, base) {
-    if (!href) return false;
-    const abs = /^(?:[a-z][a-z0-9+.-]*:)?\/\//i.test(href);
-    if (abs) return false;
-    if (href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:'))
-        return false;
-    if (!base) return true;
-    const cleanBase = base.replace(/\/$/, '');
-    try {
-        const url = new URL(href, location.origin);
-        return url.pathname === cleanBase || url.pathname.startsWith(`${cleanBase}/`);
-    } catch {
-        return false;
+export const createTagItem = (label) => {
+
+    /** @type {HTMLLIElement} - Ítem de lista creado */
+    const item = document.createElement('li');
+    item.className = 'home-page__tag';
+    item.textContent = label;
+    item.title = label;
+
+    return item;
+};
+
+
+
+/**
+ * ------------------------------------------------
+ * -----  `setDemoStatus(statusEl, message)`  -----
+ * ------------------------------------------------
+ * - Actualiza el mensaje de estado del bloque ESM.
+ * @param {Element|null} statusEl - Elemento de estado
+ * @param {string} message - Mensaje de estado
+ */
+export const setDemoStatus = (statusEl, message) => {
+
+    if (!statusEl)
+        return;
+
+    statusEl.textContent = message;
+};
+
+
+
+/**
+ * ---------------------------------------
+ * -----  `createRouteLoadedCard()`  -----
+ * ---------------------------------------
+ * - Tarjeta que escucha spa:route-loaded y muestra el id de la ruta activa.
+ * @returns {HTMLElement} - Tarjeta de integración SPA creada
+ */
+const createRouteLoadedCard = () => {
+
+    /** @type {HTMLArticleElement} - Tarjeta de integración SPA creada */
+    const article = document.createElement('article');
+    article.className = 'home-page__feature';
+
+    /** @type {HTMLParagraphElement} - Salida de texto del evento */
+    const output = document.createElement('p');
+    output.className = 'home-page__feature-text';
+    output.innerHTML = 'Esperando evento <code>spa:route-loaded</code>…';
+
+
+    /**
+     * ------------------------------------
+     * -----  `onRouteLoaded(event)`  -----
+     * ------------------------------------
+     * - Actualiza la tarjeta con el id de la ruta emitida por el plugin.
+     * @param {Event} event - Evento spa:route-loaded
+     */
+    const onRouteLoaded = (event) => {
+
+        /** @type {RouteLoadedDetail} - Detalle del evento spa:route-loaded */
+        const detail = /** @type {CustomEvent<RouteLoadedDetail>} */ (event).detail;
+
+        /** @type {string} - Id de la ruta activa */
+        const routeId = detail?.route?.id ?? 'desconocida';
+
+        output.innerHTML = `Evento recibido: ruta activa <code>${routeId}</code>`;
+    };
+
+    document.addEventListener('spa:route-loaded', onRouteLoaded, { once: true });
+
+    article.innerHTML = `
+        <span class="home-page__feature-icon" aria-hidden="true">📡</span>
+        <h4 class="home-page__feature-title">Integración SPA</h4>
+    `;
+    article.appendChild(output);
+
+    return article;
+};
+
+
+
+/**
+ * ------------------------------------
+ * -----  `renderPageDemoEsm()`  -----
+ * ------------------------------------
+ * - Renderiza las tarjetas ESM en home-demo.html.
+ */
+export const renderPageDemoEsm = () => {
+
+    /** - Contenedor de las tarjetas ESM */
+    const target = document.querySelector('[data-home-demo-target="esm"]');
+
+    /** - Elemento de estado */
+    const status = document.querySelector('[data-home-demo-status="esm"]');
+
+    if (!target) {
+        console.warn('⚠️ home.esm.js: contenedor [data-home-demo-target="esm"] no encontrado.');
+        return;
     }
-}
+
+    /** - Fragmento de documento para insertar las tarjetas ESM */
+    const fragment = document.createDocumentFragment();
+
+    PAGE_ESM_FEATURES.forEach((feature) => {
+        fragment.appendChild(createFeatureArticle(feature));
+    });
+
+    fragment.appendChild(createRouteLoadedCard());
+
+    target.replaceChildren(fragment);
+
+    setDemoStatus(
+        status,
+        `Renderizado con home.esm.js (ESM) · ${PLUGIN_NAME} v${PLUGIN_VERSION} · v${VERSION} · ${new Date().toLocaleTimeString()}`
+    );
+
+    console.warn('-----  home.esm.js  -----  ES Module  -----');
+    console.log('Tarjetas ESM:', PAGE_ESM_FEATURES.length + 1);
+};
+
 
 
 /**
- * Crea un descriptor de script para la configuración de una ruta.
- * @param {string}  src      - URL del script.
- * @param {boolean} [isModule=false] - Si es ES Module (<script type="module">).
- * @returns {{ src: string, isModule: boolean }}
+ * ----------------------------------------
+ * -----  `renderPageTags()`  -----
+ * ----------------------------------------
+ * - Renderiza tags o conceptos en la lista del demo.
  */
-export function createScriptEntry(src, isModule = false) {
-    return { src: String(src), isModule: Boolean(isModule) };
-}
+export const renderPageTags = () => {
+
+    /** - Contenedor de tags / conceptos */
+    const target = document.querySelector('[data-home-demo-target="tags"]');
+
+    if (!target) {
+        console.warn('⚠️ home.esm.js: contenedor [data-home-demo-target="tags"] no encontrado.');
+        return;
+    }
+
+    /** - Fragmento de documento para insertar los ítems */
+    const fragment = document.createDocumentFragment();
+
+    PAGE_TAGS.forEach((label) => {
+        fragment.appendChild(createTagItem(label));
+    });
+
+    target.replaceChildren(fragment);
+};
 
 
-/**
- * Crea un descriptor de estilo para la configuración de una ruta.
- * @param {string} href - URL de la hoja de estilos.
- * @returns {{ href: string }}
- */
-export function createStyleEntry(href) {
-    return { href: String(href) };
-}
+//  -----  Inicialización del demo (Fase 3 — DOM ya mutado)  -----
+
+renderPageDemoEsm();
+renderPageTags();
+
 
 
 //  -----  Export default  -----
@@ -120,11 +261,12 @@ export function createStyleEntry(href) {
 export default {
     VERSION,
     PLUGIN_NAME,
-    SPA_EVENTS,
-    createManifestEntry,
-    buildSpaPathname,
-    normalizeSpaPath,
-    isSpaLink,
-    createScriptEntry,
-    createStyleEntry,
+    PLUGIN_VERSION,
+    PAGE_TAGS,
+    PAGE_ESM_FEATURES,
+    createFeatureArticle,
+    createTagItem,
+    setDemoStatus,
+    renderPageDemoEsm,
+    renderPageTags,
 };

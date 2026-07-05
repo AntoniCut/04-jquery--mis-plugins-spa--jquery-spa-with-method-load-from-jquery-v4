@@ -1,163 +1,231 @@
 // @ts-nocheck
-"use strict";
 /*
-    *  ---------------------------------------------------------------------------------  *
-    *  -----  /css-page.cjs.js  --  /src/scripts/js/pages/css-page.cjs.js  -----  *
-    *  ---------------------------------------------------------------------------------  *
+    *  -----  /css-page.cjs.js  --  /src/scripts/js/pages/css-page.cjs.js  -----
     *
-    *  Script CommonJS (IIFE) — Manipulación de estilos CSS desde JavaScript.
-    *  Demuestra cómo trabajar con clases, inline styles y CSS Custom Properties.
+    *  Script CommonJS (IIFE) — Utilidades CSS3 para la página.
+    *  Renderiza contenido en css-demo.html tras la carga del plugin SPA V3.1.
 */
 
-(function () {
+
+/**
+ * -----  Características demo renderizadas por CJS  -----
+ * @typedef {Object} PageFeature
+ * @property {string} icon
+ * @property {string} title
+ * @property {string} text
+ */
+
+
+
+(() => {
 
     console.log('\n');
     console.warn('-----  css-page.cjs.js  -----  CommonJS (IIFE)  -----');
     console.log('\n');
 
 
-    /*
-        --------------------------------------------------
-        -----  Utilidades CSS con JavaScript clásico  -----
-        --------------------------------------------------
-    */
+    //*  -----  Constantes  -----
 
-    /**
-     * Calcula la especificidad de un selector CSS simple.
-     * Devuelve un array [IDs, Clases/Atributos/Pseudoclases, Elementos/Pseudoelementos].
-     * @param {string} selector
-     * @returns {[number, number, number]}
-     */
-    function calcSpecificity(selector) {
-        var ids     = (selector.match(/#[\w-]+/g) || []).length;
-        var classes = (selector.match(/\.[\w-]+|\[[\w\s=~|^$*"'-]+\]|:[\w-]+(?!\()/g) || []).length;
-        var tags    = (selector.match(/(?:^|[\s>+~])[\w-]+|:{2}[\w-]+/g) || []).length;
-        return [ids, classes, tags];
-    }
+    /** Versión del script */
+    const VERSION = '1.0.0';
 
+    /** Nombre del plugin SPA */
+    const PLUGIN = 'spa-loader-content-html v3.1';
 
-    /**
-     * Formatea la especificidad como string legible "a,b,c".
-     * @param {string} selector
-     * @returns {string}
-     */
-    function specificityString(selector) {
-        return calcSpecificity(selector).join(',');
-    }
+    /** @type {PageFeature[]} - Características demo renderizadas por CJS */
+    const PAGE_FEATURES = [
+                {
+                        "icon": "🎯",
+                        "title": "Selectores CSS",
+                        "text": "Clases, IDs, pseudoclases y especificidad calculada desde JavaScript clásico."
+                },
+                {
+                        "icon": "📦",
+                        "title": "Box Model",
+                        "text": "Manipulación del DOM para demostrar padding, border y margin en tiempo real."
+                },
+                {
+                        "icon": "📦",
+                        "title": "Script clásico (IIFE)",
+                        "text": "Se ejecuta en la Fase 3 del plugin cuando css-demo.html ya está inyectado."
+                }
+        ];
 
 
-    /**
-     * Convierte un nombre a formato CSS custom property.
-     * @param {string} name
-     * @param {string|number} value
-     * @returns {string}
-     */
-    function toCSSCustomProperty(name, value) {
-        var prop = '--' + name.replace(/([A-Z])/g, function (match) {
-            return '-' + match.toLowerCase();
-        }).replace(/^-/, '');
-        return prop + ': ' + value + ';';
-    }
+    //*  -----  Utilidades DOM  -----
 
 
     /**
-     * Convierte un objeto de estilos a string CSS inline.
-     * @param {Object} styles
-     * @returns {string}
+     * --------------------------------
+     * -----  `createText(text)`  -----
+     * --------------------------------
+     * - Crea un nodo de texto seguro.
+     * @param {string} text
+     * @returns {Text}
      */
-    function stylesToString(styles) {
-        return Object.keys(styles).map(function (prop) {
-            var cssProp = prop.replace(/([A-Z])/g, function (m) { return '-' + m.toLowerCase(); });
-            return cssProp + ': ' + styles[prop];
-        }).join('; ') + ';';
-    }
+    const createText = (text) => document.createTextNode(text);
 
 
-    //  -----  Demostración de especificidad  -----
 
-    var selectores = [
-        'div',
-        '.card',
-        '#hero',
-        'div.card',
-        '#nav .menu li a',
-        '.header__title--main',
-        'input[type="text"]',
-        'a:hover',
-        'p::first-line',
-    ];
+    /**
+     * -----------------------------------------------
+     * -----  `createElement(tag, attrs, text)`  -----
+     * -----------------------------------------------
+     * Crea un elemento con atributos y contenido opcional.
+     * @param {string} tag - Nombre del elemento
+     * @param {Record<string, string>} [attrs] - Atributos del elemento
+     * @param {string} [text] - Contenido del elemento
+     * @returns {HTMLElement} - Elemento creado
+     */
+    const createElement = (tag, attrs, text) => {
 
-    console.log('-----  Especificidad de selectores CSS  -----');
-    selectores.forEach(function (sel) {
-        console.log(
-            sel.padEnd(30),
-            '→  especificidad: (' + specificityString(sel) + ')'
-        );
-    });
+        /** - Elemento creado */
+        const el = document.createElement(tag);
 
-
-    //  -----  Demostración de CSS Custom Properties  -----
-
-    console.log('\n-----  CSS Custom Properties  -----');
-    console.log(toCSSCustomProperty('primaryColor', '#264de4'));
-    console.log(toCSSCustomProperty('fontSizeLg', '2.4rem'));
-    console.log(toCSSCustomProperty('borderRadius', '0.8rem'));
-    console.log(toCSSCustomProperty('bgGradientHeader', 'linear-gradient(to right, #264de4, #2965f1)'));
-
-
-    //  -----  Demostración de stylesToString  -----
-
-    console.log('\n-----  Inline styles  -----');
-    var cardStyles = {
-        display: 'flex',
-        flexDirection: 'column',
-        backgroundColor: '#ffffff',
-        borderRadius: '1rem',
-        padding: '2.5rem',
-        boxShadow: '0 4px 16px rgba(38,77,228,0.1)',
-    };
-
-    console.log('style="' + stylesToString(cardStyles) + '"');
-
-
-    /*
-        --------------------------------------------------
-        -----  Patrón Module — CSSUtils  -----
-        --------------------------------------------------
-    */
-
-    var CSSUtils = (function () {
-
-        var _version = '1.0.0';
-
-        var _units = ['px', 'rem', 'em', '%', 'vw', 'vh', 'vmin', 'vmax', 'ch', 'fr'];
-
-        /**
-         * Comprueba si una unidad CSS es válida.
-         * @param {string} unit
-         * @returns {boolean}
-         */
-        function isValidUnit(unit) {
-            return _units.indexOf(unit) !== -1;
+        if (attrs) {
+            Object.keys(attrs).forEach((key) => {
+                el.setAttribute(key, attrs[key]);
+            });
         }
 
-        return {
-            version: _version,
-            units: _units,
-            isValidUnit: isValidUnit,
-            calcSpecificity: calcSpecificity,
-            specificityString: specificityString,
-            toCSSCustomProperty: toCSSCustomProperty,
-            stylesToString: stylesToString,
-        };
+        if (text) {
+            el.appendChild(createText(text));
+        }
 
-    })();
+        return el;
+    };
 
-    console.log('\n-----  CSSUtils module  -----');
-    console.log('Versión:', CSSUtils.version);
-    console.log('Unidades disponibles:', CSSUtils.units.join(', '));
-    console.log('¿"rem" es válida?  →', CSSUtils.isValidUnit('rem'));
-    console.log('¿"pts" es válida?  →', CSSUtils.isValidUnit('pts'));
+
+
+
+    /**
+     * ------------------------------------------
+     * -----  `createFeatureCard(feature)`  -----
+     * ------------------------------------------
+     * - Crea una tarjeta de feature con el markup del demo.
+     * @param {PageFeature} feature - Característica a renderizar
+     * @returns {HTMLElement} - Tarjeta de feature creada
+     */
+    const createFeatureCard = (feature) => {
+
+        /** - Tarjeta de feature creada */
+        const article = createElement('article', { class: 'css-page__feature' });
+
+        article.appendChild(createElement('span', { class: 'css-page__feature-icon', 'aria-hidden': 'true' }, feature.icon));
+        article.appendChild(createElement('h4', { class: 'css-page__feature-title' }, feature.title));
+        article.appendChild(createElement('p', { class: 'css-page__feature-text' }, feature.text));
+
+        return article;
+    };
+
+
+
+    /**
+     * ------------------------------------------
+     * -----  `createIslandCounterCard()`  -----
+     * ------------------------------------------
+     * - Crea la tarjeta interactiva con contador.
+     * @returns {HTMLElement} - Tarjeta interactiva creada
+     */
+    const createIslandCounterCard = () => {
+
+        /** - Contador de clicks */
+        let count = 0;
+
+        /** @type {HTMLArticleElement} - Tarjeta interactiva creada */
+        const article = createElement('article', { class: 'css-page__feature' });
+
+        /** @type {HTMLStrongElement} - Salida de texto */
+        const output = createElement('strong', { class: 'css-page__feature-title' }, '0');
+
+        /** @type {HTMLButtonElement} - Botón de incremento */
+        const button = createElement('button', {
+            type: 'button',
+            class: 'css-page__tag',
+            'aria-label': 'Incrementar contador de la isla CJS',
+        }, 'Click — CJS');
+
+        button.addEventListener('click', () => {
+            count += 1;
+            output.textContent = String(count);
+        });
+
+        article.appendChild(createElement('span', { class: 'css-page__feature-icon', 'aria-hidden': 'true' }, '🧩'));
+        article.appendChild(createElement('h4', { class: 'css-page__feature-title' }, 'Isla interactiva CJS'));
+        article.appendChild(createElement('p', { class: 'css-page__feature-text' }, 'Botón con contador que simula un componente hidratado por CSS Page CJS.'));
+
+        /** @type {HTMLParagraphElement} - Línea de texto de clicks */
+        const clicksLine = createElement('p', { class: 'css-page__feature-text' });
+        clicksLine.appendChild(createText('Clicks: '));
+        clicksLine.appendChild(output);
+
+        article.appendChild(clicksLine);
+        article.appendChild(button);
+
+        return article;
+    };
+
+
+
+    /**
+     * --------------------------------------------
+     * -----  `setStatus(statusEl, message)`  -----
+     * --------------------------------------------
+     * - Actualiza el mensaje de estado del bloque CJS.
+     * @param {Element|null} statusEl - Elemento de estado
+     * @param {string} message - Mensaje de estado
+     */
+    const setStatus = (statusEl, message) => {
+
+        if (!statusEl)
+            return;
+
+        statusEl.textContent = message;
+    };
+
+
+
+    /**
+     * ------------------------------------
+     * -----  `renderPageDemoCjs()`  -----
+     * ------------------------------------
+     * - Renderiza las tarjetas CJS en css-demo.html.
+     */
+    const renderPageDemoCjs = () => {
+
+        /** - Contenedor de las tarjetas CJS */
+        const target = document.querySelector('[data-css-demo-target="cjs"]');
+
+        /** - Elemento de estado */
+        const status = document.querySelector('[data-css-demo-status="cjs"]');
+
+        if (!target) {
+            console.warn('⚠️ css-page.cjs.js: contenedor [data-css-demo-target="cjs"] no encontrado.');
+            return;
+        }
+
+        /** - Fragmento de documento para insertar las tarjetas CJS */
+        const fragment = document.createDocumentFragment();
+
+        PAGE_FEATURES.forEach((feature) => {
+            fragment.appendChild(createFeatureCard(feature));
+        });
+
+        fragment.appendChild(createIslandCounterCard());
+
+        target.replaceChildren(fragment);
+
+        setStatus(
+            status,
+            `Renderizado con css-page.cjs.js (IIFE) · ${PLUGIN} · v${VERSION} · ${new Date().toLocaleTimeString()}`
+        );
+
+        console.log('-----  css-page.cjs.js — DOM renderizado en css-demo  -----');
+        console.log('Tarjetas CJS:', PAGE_FEATURES.length + 1);
+    };
+
+
+    renderPageDemoCjs();
 
     console.log('\n');
 

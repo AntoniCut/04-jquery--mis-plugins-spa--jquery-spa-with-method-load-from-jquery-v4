@@ -1,170 +1,231 @@
 // @ts-nocheck
-"use strict";
 /*
-    *  -----------------------------------------------------------------------------------------  *
-    *  -----  /javascript-page.cjs.js  --  /src/scripts/js/pages/javascript-page.cjs.js  -----  *
-    *  -----------------------------------------------------------------------------------------  *
+    *  -----  /javascript-page.cjs.js  --  /src/scripts/js/pages/javascript-page.cjs.js  -----
     *
-    *  Script CommonJS (IIFE) — Patrones clásicos de JavaScript.
-    *  Demuestra closures, módulos, prototipos y patrones funcionales.
+    *  Script CommonJS (IIFE) — Utilidades JavaScript para la página.
+    *  Renderiza contenido en javascript-demo.html tras la carga del plugin SPA V3.1.
 */
 
-(function () {
+
+/**
+ * -----  Características demo renderizadas por CJS  -----
+ * @typedef {Object} PageFeature
+ * @property {string} icon
+ * @property {string} title
+ * @property {string} text
+ */
+
+
+
+(() => {
 
     console.log('\n');
     console.warn('-----  javascript-page.cjs.js  -----  CommonJS (IIFE)  -----');
     console.log('\n');
 
 
-    /*
-        ----------------------------------------
-        -----  1. Closures y estado privado  -----
-        ----------------------------------------
-    */
+    //*  -----  Constantes  -----
 
-    console.log('-----  1. Closure — Contador  -----');
+    /** Versión del script */
+    const VERSION = '1.0.0';
 
-    function makeCounter(initial) {
-        var _count = initial || 0;
+    /** Nombre del plugin SPA */
+    const PLUGIN = 'spa-loader-content-html v3.1';
 
-        return {
-            increment: function () { return ++_count; },
-            decrement: function () { return --_count; },
-            reset:     function () { _count = 0; return _count; },
-            value:     function () { return _count; },
-        };
-    }
-
-    var counter = makeCounter(10);
-    console.log('Valor inicial:', counter.value());
-    counter.increment();
-    counter.increment();
-    counter.increment();
-    console.log('Después de 3 incrementos:', counter.value());
-    counter.decrement();
-    console.log('Después de 1 decremento:', counter.value());
-    counter.reset();
-    console.log('Después de reset:', counter.value());
+    /** @type {PageFeature[]} - Características demo renderizadas por CJS */
+    const PAGE_FEATURES = [
+                {
+                        "icon": "🔒",
+                        "title": "Closures",
+                        "text": "Estado privado con funciones anidadas en patrón IIFE clásico."
+                },
+                {
+                        "icon": "📣",
+                        "title": "EventEmitter",
+                        "text": "Patrón módulo con prototipos para suscribir y emitir eventos."
+                },
+                {
+                        "icon": "📦",
+                        "title": "Script clásico (IIFE)",
+                        "text": "Demostración CJS tras applyRouteMetaAsync del plugin."
+                }
+        ];
 
 
-    /*
-        ------------------------------------------------
-        -----  2. Patrón módulo con IIFE anidada  -----
-        ------------------------------------------------
-    */
+    //*  -----  Utilidades DOM  -----
 
-    console.log('\n-----  2. Module Pattern  -----');
 
-    var EventEmitter = (function () {
+    /**
+     * --------------------------------
+     * -----  `createText(text)`  -----
+     * --------------------------------
+     * - Crea un nodo de texto seguro.
+     * @param {string} text
+     * @returns {Text}
+     */
+    const createText = (text) => document.createTextNode(text);
 
-        function EventEmitter() {
-            this._events = {};
+
+
+    /**
+     * -----------------------------------------------
+     * -----  `createElement(tag, attrs, text)`  -----
+     * -----------------------------------------------
+     * Crea un elemento con atributos y contenido opcional.
+     * @param {string} tag - Nombre del elemento
+     * @param {Record<string, string>} [attrs] - Atributos del elemento
+     * @param {string} [text] - Contenido del elemento
+     * @returns {HTMLElement} - Elemento creado
+     */
+    const createElement = (tag, attrs, text) => {
+
+        /** - Elemento creado */
+        const el = document.createElement(tag);
+
+        if (attrs) {
+            Object.keys(attrs).forEach((key) => {
+                el.setAttribute(key, attrs[key]);
+            });
         }
 
-        EventEmitter.prototype.on = function (event, listener) {
-            if (!this._events[event]) {
-                this._events[event] = [];
-            }
-            this._events[event].push(listener);
-            return this;
-        };
+        if (text) {
+            el.appendChild(createText(text));
+        }
 
-        EventEmitter.prototype.off = function (event, listener) {
-            if (!this._events[event]) return this;
-            this._events[event] = this._events[event].filter(function (l) {
-                return l !== listener;
-            });
-            return this;
-        };
-
-        EventEmitter.prototype.emit = function (event) {
-            var args = Array.prototype.slice.call(arguments, 1);
-            if (!this._events[event]) return false;
-            this._events[event].forEach(function (listener) {
-                listener.apply(null, args);
-            });
-            return true;
-        };
-
-        EventEmitter.prototype.listenerCount = function (event) {
-            return (this._events[event] || []).length;
-        };
-
-        return EventEmitter;
-
-    })();
-
-    var emitter = new EventEmitter();
-
-    emitter.on('data', function (msg) {
-        console.log('Evento "data" recibido:', msg);
-    });
-
-    emitter.on('data', function (msg) {
-        console.log('Segundo listener:', msg.toUpperCase());
-    });
-
-    console.log('Listeners en "data":', emitter.listenerCount('data'));
-    emitter.emit('data', 'hola mundo');
+        return el;
+    };
 
 
-    /*
-        -------------------------------------------
-        -----  3. Funciones de orden superior  -----
-        -------------------------------------------
-    */
-
-    console.log('\n-----  3. Higher-Order Functions  -----');
-
-    function pipe() {
-        var fns = Array.prototype.slice.call(arguments);
-        return function (value) {
-            return fns.reduce(function (acc, fn) { return fn(acc); }, value);
-        };
-    }
-
-    var double  = function (n) { return n * 2; };
-    var addTen  = function (n) { return n + 10; };
-    var square  = function (n) { return n * n; };
-
-    var transform = pipe(double, addTen, square);
-
-    console.log('pipe(double, addTen, square)(3):');
-    console.log('  double(3) = 6  →  addTen(6) = 16  →  square(16) = 256');
-    console.log('  Resultado:', transform(3));
 
 
-    /*
-        ------------------------------------------
-        -----  4. Memoización (optimización)  -----
-        ------------------------------------------
-    */
+    /**
+     * ------------------------------------------
+     * -----  `createFeatureCard(feature)`  -----
+     * ------------------------------------------
+     * - Crea una tarjeta de feature con el markup del demo.
+     * @param {PageFeature} feature - Característica a renderizar
+     * @returns {HTMLElement} - Tarjeta de feature creada
+     */
+    const createFeatureCard = (feature) => {
 
-    console.log('\n-----  4. Memoización  -----');
+        /** - Tarjeta de feature creada */
+        const article = createElement('article', { class: 'js-page__feature' });
 
-    function memoize(fn) {
-        var cache = {};
-        return function () {
-            var key = JSON.stringify(Array.prototype.slice.call(arguments));
-            if (cache[key] !== undefined) {
-                console.log('  (caché) clave:', key);
-                return cache[key];
-            }
-            cache[key] = fn.apply(null, arguments);
-            return cache[key];
-        };
-    }
+        article.appendChild(createElement('span', { class: 'js-page__feature-icon', 'aria-hidden': 'true' }, feature.icon));
+        article.appendChild(createElement('h4', { class: 'js-page__feature-title' }, feature.title));
+        article.appendChild(createElement('p', { class: 'js-page__feature-text' }, feature.text));
 
-    function slowFactorial(n) {
-        if (n <= 1) return 1;
-        return n * slowFactorial(n - 1);
-    }
+        return article;
+    };
 
-    var factorial = memoize(slowFactorial);
 
-    console.log('factorial(5):', factorial(5));
-    console.log('factorial(5) (desde caché):', factorial(5));
-    console.log('factorial(8):', factorial(8));
+
+    /**
+     * ------------------------------------------
+     * -----  `createIslandCounterCard()`  -----
+     * ------------------------------------------
+     * - Crea la tarjeta interactiva con contador.
+     * @returns {HTMLElement} - Tarjeta interactiva creada
+     */
+    const createIslandCounterCard = () => {
+
+        /** - Contador de clicks */
+        let count = 0;
+
+        /** @type {HTMLArticleElement} - Tarjeta interactiva creada */
+        const article = createElement('article', { class: 'js-page__feature' });
+
+        /** @type {HTMLStrongElement} - Salida de texto */
+        const output = createElement('strong', { class: 'js-page__feature-title' }, '0');
+
+        /** @type {HTMLButtonElement} - Botón de incremento */
+        const button = createElement('button', {
+            type: 'button',
+            class: 'js-page__tag',
+            'aria-label': 'Incrementar contador de la isla CJS',
+        }, 'Click — CJS');
+
+        button.addEventListener('click', () => {
+            count += 1;
+            output.textContent = String(count);
+        });
+
+        article.appendChild(createElement('span', { class: 'js-page__feature-icon', 'aria-hidden': 'true' }, '🧩'));
+        article.appendChild(createElement('h4', { class: 'js-page__feature-title' }, 'Isla interactiva CJS'));
+        article.appendChild(createElement('p', { class: 'js-page__feature-text' }, 'Contador con closure encapsulado — patrón clásico pre-ESM.'));
+
+        /** @type {HTMLParagraphElement} - Línea de texto de clicks */
+        const clicksLine = createElement('p', { class: 'js-page__feature-text' });
+        clicksLine.appendChild(createText('Clicks: '));
+        clicksLine.appendChild(output);
+
+        article.appendChild(clicksLine);
+        article.appendChild(button);
+
+        return article;
+    };
+
+
+
+    /**
+     * --------------------------------------------
+     * -----  `setStatus(statusEl, message)`  -----
+     * --------------------------------------------
+     * - Actualiza el mensaje de estado del bloque CJS.
+     * @param {Element|null} statusEl - Elemento de estado
+     * @param {string} message - Mensaje de estado
+     */
+    const setStatus = (statusEl, message) => {
+
+        if (!statusEl)
+            return;
+
+        statusEl.textContent = message;
+    };
+
+
+
+    /**
+     * ------------------------------------
+     * -----  `renderPageDemoCjs()`  -----
+     * ------------------------------------
+     * - Renderiza las tarjetas CJS en javascript-demo.html.
+     */
+    const renderPageDemoCjs = () => {
+
+        /** - Contenedor de las tarjetas CJS */
+        const target = document.querySelector('[data-js-demo-target="cjs"]');
+
+        /** - Elemento de estado */
+        const status = document.querySelector('[data-js-demo-status="cjs"]');
+
+        if (!target) {
+            console.warn('⚠️ javascript-page.cjs.js: contenedor [data-js-demo-target="cjs"] no encontrado.');
+            return;
+        }
+
+        /** - Fragmento de documento para insertar las tarjetas CJS */
+        const fragment = document.createDocumentFragment();
+
+        PAGE_FEATURES.forEach((feature) => {
+            fragment.appendChild(createFeatureCard(feature));
+        });
+
+        fragment.appendChild(createIslandCounterCard());
+
+        target.replaceChildren(fragment);
+
+        setStatus(
+            status,
+            `Renderizado con javascript-page.cjs.js (IIFE) · ${PLUGIN} · v${VERSION} · ${new Date().toLocaleTimeString()}`
+        );
+
+        console.log('-----  javascript-page.cjs.js — DOM renderizado en javascript-demo  -----');
+        console.log('Tarjetas CJS:', PAGE_FEATURES.length + 1);
+    };
+
+
+    renderPageDemoCjs();
 
     console.log('\n');
 

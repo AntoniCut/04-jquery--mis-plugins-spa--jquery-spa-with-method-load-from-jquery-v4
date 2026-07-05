@@ -1,103 +1,231 @@
 // @ts-nocheck
-"use strict";
 /*
-    *  -------------------------------------------------------------------------------------------  *
-    *  -----  /jquery-ui-page.cjs.js  --  /src/scripts/js/pages/jquery-ui-page.cjs.js  -----  *
-    *  -------------------------------------------------------------------------------------------  *
+    *  -----  /jquery-ui-page.cjs.js  --  /src/scripts/js/pages/jquery-ui-page.cjs.js  -----
     *
-    *  Script CommonJS (IIFE) — Catálogo de widgets, interactions y effects de jQuery UI.
-    *  Muestra ejemplos de inicialización y las opciones principales de cada componente.
+    *  Script CommonJS (IIFE) — Utilidades jQuery UI para la página.
+    *  Renderiza contenido en jquery-ui-demo.html tras la carga del plugin SPA V3.1.
 */
 
-(function () {
+
+/**
+ * -----  Características demo renderizadas por CJS  -----
+ * @typedef {Object} PageFeature
+ * @property {string} icon
+ * @property {string} title
+ * @property {string} text
+ */
+
+
+
+(() => {
 
     console.log('\n');
-    console.warn('-----  jquery-ui-page.cjs.js  -----  jQuery UI  -----');
+    console.warn('-----  jquery-ui-page.cjs.js  -----  CommonJS (IIFE)  -----');
     console.log('\n');
 
 
-    /*
-        -------------------------------------------------------
-        -----  Widgets  -----
-        -------------------------------------------------------
-    */
+    //*  -----  Constantes  -----
 
-    var widgets = [
-        { name: 'Accordion',    call: "$('#accordion').accordion({ collapsible: true, active: 0 });" },
-        { name: 'Autocomplete', call: "$('#tags').autocomplete({ source: ['JavaScript', 'jQuery', 'CSS'] });" },
-        { name: 'Button',       call: "$('#btn').button({ label: 'Guardar', icons: { primary: 'ui-icon-disk' } });" },
-        { name: 'Datepicker',   call: "$('#date').datepicker({ dateFormat: 'dd/mm/yy', minDate: 0 });" },
-        { name: 'Dialog',       call: "$('#dialog').dialog({ autoOpen: false, modal: true, title: 'Ventana' });" },
-        { name: 'Menu',         call: "$('#menu').menu();" },
-        { name: 'Progressbar',  call: "$('#progress').progressbar({ value: 60, max: 100 });" },
-        { name: 'Slider',       call: "$('#slider').slider({ min: 0, max: 100, value: 50, step: 5 });" },
-        { name: 'Spinner',      call: "$('#spinner').spinner({ min: 0, max: 99, step: 1 });" },
-        { name: 'Tabs',         call: "$('#tabs').tabs({ active: 0, collapsible: false });" },
-        { name: 'Tooltip',      call: "$('body').tooltip({ items: '[title]', track: true });" },
-    ];
+    /** Versión del script */
+    const VERSION = '1.0.0';
 
-    console.log('-----  Widgets — ejemplos de inicialización  -----\n');
-    widgets.forEach(function (w) {
-        console.log('  ' + w.name.padEnd(14) + ': ' + w.call);
-    });
+    /** Nombre del plugin SPA */
+    const PLUGIN = 'spa-loader-content-html v3.1';
 
-
-    /*
-        -------------------------------------------------------
-        -----  Interactions  -----
-        -------------------------------------------------------
-    */
-
-    var interactions = [
-        { name: 'Draggable', call: "$('#box').draggable({ containment: 'parent', opacity: 0.7 });" },
-        { name: 'Droppable', call: "$('#drop').droppable({ accept: '.drag-item', drop: function(e, ui) {} });" },
-        { name: 'Resizable', call: "$('#box').resizable({ handles: 'se', minWidth: 100, maxWidth: 500 });" },
-        { name: 'Selectable', call: "$('#list').selectable({ filter: 'li' });" },
-        { name: 'Sortable',   call: "$('#list').sortable({ axis: 'y', placeholder: 'ui-state-highlight' });" },
-    ];
-
-    console.log('\n-----  Interactions — ejemplos de inicialización  -----\n');
-    interactions.forEach(function (i) {
-        console.log('  ' + i.name.padEnd(12) + ': ' + i.call);
-    });
+    /** @type {PageFeature[]} - Características demo renderizadas por CJS */
+    const PAGE_FEATURES = [
+                {
+                        "icon": "🧩",
+                        "title": "Widgets",
+                        "text": "Conceptos de widgets e interactions desde un IIFE clásico."
+                },
+                {
+                        "icon": "✨",
+                        "title": "Effects",
+                        "text": "Animaciones y transiciones explicadas en tarjetas dinámicas."
+                },
+                {
+                        "icon": "📦",
+                        "title": "Script clásico (IIFE)",
+                        "text": "Carga en Fase 3 cuando jquery-ui-demo.html ya existe."
+                }
+        ];
 
 
-    /*
-        -------------------------------------------------------
-        -----  Effects  -----
-        -------------------------------------------------------
-    */
-
-    var effects = [
-        'blind', 'bounce', 'clip', 'drop', 'explode',
-        'fade', 'fold', 'highlight', 'puff', 'pulsate',
-        'scale', 'shake', 'size', 'slide', 'transfer',
-    ];
-
-    console.log('\n-----  Effects disponibles  -----\n');
-    console.log('  Uso: $(selector).effect(effectName, options, duration, callback);\n');
-    effects.forEach(function (ef) {
-        console.log('  $el.effect("' + ef + '", {}, 400, function() { /* done */ });');
-    });
+    //*  -----  Utilidades DOM  -----
 
 
-    /*
-        -------------------------------------------------------
-        -----  Clases del tema  -----
-        -------------------------------------------------------
-    */
+    /**
+     * --------------------------------
+     * -----  `createText(text)`  -----
+     * --------------------------------
+     * - Crea un nodo de texto seguro.
+     * @param {string} text
+     * @returns {Text}
+     */
+    const createText = (text) => document.createTextNode(text);
 
-    var themeClasses = [
-        'ui-widget', 'ui-widget-header', 'ui-widget-content',
-        'ui-state-default', 'ui-state-hover', 'ui-state-focus',
-        'ui-state-active', 'ui-state-highlight', 'ui-state-error',
-        'ui-state-disabled', 'ui-corner-all', 'ui-icon',
-    ];
 
-    console.log('\n-----  Clases CSS del tema  -----\n');
-    themeClasses.forEach(function (cls) {
-        console.log('  .' + cls);
-    });
+
+    /**
+     * -----------------------------------------------
+     * -----  `createElement(tag, attrs, text)`  -----
+     * -----------------------------------------------
+     * Crea un elemento con atributos y contenido opcional.
+     * @param {string} tag - Nombre del elemento
+     * @param {Record<string, string>} [attrs] - Atributos del elemento
+     * @param {string} [text] - Contenido del elemento
+     * @returns {HTMLElement} - Elemento creado
+     */
+    const createElement = (tag, attrs, text) => {
+
+        /** - Elemento creado */
+        const el = document.createElement(tag);
+
+        if (attrs) {
+            Object.keys(attrs).forEach((key) => {
+                el.setAttribute(key, attrs[key]);
+            });
+        }
+
+        if (text) {
+            el.appendChild(createText(text));
+        }
+
+        return el;
+    };
+
+
+
+
+    /**
+     * ------------------------------------------
+     * -----  `createFeatureCard(feature)`  -----
+     * ------------------------------------------
+     * - Crea una tarjeta de feature con el markup del demo.
+     * @param {PageFeature} feature - Característica a renderizar
+     * @returns {HTMLElement} - Tarjeta de feature creada
+     */
+    const createFeatureCard = (feature) => {
+
+        /** - Tarjeta de feature creada */
+        const article = createElement('article', { class: 'jquery-ui-page__feature' });
+
+        article.appendChild(createElement('span', { class: 'jquery-ui-page__feature-icon', 'aria-hidden': 'true' }, feature.icon));
+        article.appendChild(createElement('h4', { class: 'jquery-ui-page__feature-title' }, feature.title));
+        article.appendChild(createElement('p', { class: 'jquery-ui-page__feature-text' }, feature.text));
+
+        return article;
+    };
+
+
+
+    /**
+     * ------------------------------------------
+     * -----  `createIslandCounterCard()`  -----
+     * ------------------------------------------
+     * - Crea la tarjeta interactiva con contador.
+     * @returns {HTMLElement} - Tarjeta interactiva creada
+     */
+    const createIslandCounterCard = () => {
+
+        /** - Contador de clicks */
+        let count = 0;
+
+        /** @type {HTMLArticleElement} - Tarjeta interactiva creada */
+        const article = createElement('article', { class: 'jquery-ui-page__feature' });
+
+        /** @type {HTMLStrongElement} - Salida de texto */
+        const output = createElement('strong', { class: 'jquery-ui-page__feature-title' }, '0');
+
+        /** @type {HTMLButtonElement} - Botón de incremento */
+        const button = createElement('button', {
+            type: 'button',
+            class: 'jquery-ui-page__tag',
+            'aria-label': 'Incrementar contador de la isla CJS',
+        }, 'Click — CJS');
+
+        button.addEventListener('click', () => {
+            count += 1;
+            output.textContent = String(count);
+        });
+
+        article.appendChild(createElement('span', { class: 'jquery-ui-page__feature-icon', 'aria-hidden': 'true' }, '🧩'));
+        article.appendChild(createElement('h4', { class: 'jquery-ui-page__feature-title' }, 'Isla interactiva CJS'));
+        article.appendChild(createElement('p', { class: 'jquery-ui-page__feature-text' }, 'Contador interactivo simulando un widget jQuery UI hidratado.'));
+
+        /** @type {HTMLParagraphElement} - Línea de texto de clicks */
+        const clicksLine = createElement('p', { class: 'jquery-ui-page__feature-text' });
+        clicksLine.appendChild(createText('Clicks: '));
+        clicksLine.appendChild(output);
+
+        article.appendChild(clicksLine);
+        article.appendChild(button);
+
+        return article;
+    };
+
+
+
+    /**
+     * --------------------------------------------
+     * -----  `setStatus(statusEl, message)`  -----
+     * --------------------------------------------
+     * - Actualiza el mensaje de estado del bloque CJS.
+     * @param {Element|null} statusEl - Elemento de estado
+     * @param {string} message - Mensaje de estado
+     */
+    const setStatus = (statusEl, message) => {
+
+        if (!statusEl)
+            return;
+
+        statusEl.textContent = message;
+    };
+
+
+
+    /**
+     * ------------------------------------
+     * -----  `renderPageDemoCjs()`  -----
+     * ------------------------------------
+     * - Renderiza las tarjetas CJS en jquery-ui-demo.html.
+     */
+    const renderPageDemoCjs = () => {
+
+        /** - Contenedor de las tarjetas CJS */
+        const target = document.querySelector('[data-jquery-ui-demo-target="cjs"]');
+
+        /** - Elemento de estado */
+        const status = document.querySelector('[data-jquery-ui-demo-status="cjs"]');
+
+        if (!target) {
+            console.warn('⚠️ jquery-ui-page.cjs.js: contenedor [data-jquery-ui-demo-target="cjs"] no encontrado.');
+            return;
+        }
+
+        /** - Fragmento de documento para insertar las tarjetas CJS */
+        const fragment = document.createDocumentFragment();
+
+        PAGE_FEATURES.forEach((feature) => {
+            fragment.appendChild(createFeatureCard(feature));
+        });
+
+        fragment.appendChild(createIslandCounterCard());
+
+        target.replaceChildren(fragment);
+
+        setStatus(
+            status,
+            `Renderizado con jquery-ui-page.cjs.js (IIFE) · ${PLUGIN} · v${VERSION} · ${new Date().toLocaleTimeString()}`
+        );
+
+        console.log('-----  jquery-ui-page.cjs.js — DOM renderizado en jquery-ui-demo  -----');
+        console.log('Tarjetas CJS:', PAGE_FEATURES.length + 1);
+    };
+
+
+    renderPageDemoCjs();
 
     console.log('\n');
 
