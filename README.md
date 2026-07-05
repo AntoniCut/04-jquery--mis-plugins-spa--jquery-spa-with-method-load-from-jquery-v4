@@ -1,6 +1,6 @@
 # jQuery SPA with Method Load from jQuery — v4
 
-Demo y referencia del plugin **`jquery.spa-with-method-load-from-jquery.js`**: una SPA sin frameworks que carga fragmentos HTML con **`jQuery.load()`**, enruta con un manifiesto ligero, integra **jQuery UI** bajo demanda y expone un pipeline de desarrollo con Gulp, Shiki y servidores Express.
+Demo y referencia del plugin **`jquery.spa-with-method-load-from-jquery.js`**: una SPA sin frameworks que carga fragmentos HTML con **`jQuery.load()`**, enruta con un manifiesto ligero, integra **jQuery UI** bajo demanda y expone un pipeline de desarrollo con Gulp y servidores Express.
 
 **Autor:** Antonio Francisco Cutillas García — [AntonyDev](https://antonydev.tech)  
 **Licencia:** ISC
@@ -11,15 +11,15 @@ Demo y referencia del plugin **`jquery.spa-with-method-load-from-jquery.js`**: u
 
 | Área | Detalle |
 |---|---|
-| Carga de vistas | `$(selector).load(url)` secuencial sobre `route.components` y `route.pagesComponents` |
+| Carga de vistas | `$(selector).load(url)` secuencial sobre `route.components` |
 | Rutas | Lazy loading con `import()` + caché en `Map`; manifiesto `{ id, path, file }` |
 | Navegación | `history.pushState` / `popstate`; enlaces `a[data-id]` y `a[data-route]`; `routeFile` en el state |
 | Metadatos | `pageTitle`, `headerTitle`, `favicon`, CSS y JS por ruta |
 | jQuery UI | `libs` + `libLoader`; draggable, navbar, cambio de themes dinámico |
-| Extras | View Transitions API, Markdown Shiki, reescritura de URLs inyectadas, 404 integrada |
+| Extras | View Transitions API, reescritura de URLs inyectadas, 404 integrada |
 | Eventos | `spa:route-loaded`, `spa:first-route-loaded`, `spa:route-load-error` |
 
-Documentación ampliada en la página de inicio del proyecto (`src/pages-components/home.html`).
+Documentación ampliada en la página de inicio del proyecto (`src/pages/home.html`).
 
 ---
 
@@ -33,7 +33,6 @@ Documentación ampliada en la página de inicio del proyecto (`src/pages-compone
 | Gulp | 5.x | Pipeline de build (`src/` → `app/` → `dist/`) |
 | Express | 5.x | Servidor de desarrollo y preview |
 | BrowserSync | 3.x | Live reload |
-| Shiki | 4.x | Resaltado de código (Markdown Shiki) |
 | sharp | 0.34.x | Optimización de imágenes |
 | pnpm | 9.x | Gestor de paquetes |
 | Node.js | ESM | Runtime |
@@ -66,7 +65,6 @@ pnpm install
 | `pnpm stop:dev` | Detiene el servidor de desarrollo |
 | `pnpm build` | Build de producción en `dist/` |
 | `pnpm preview` | Sirve `dist/` (puerto 4173 por defecto) |
-| `pnpm code-highlight` | Regenera bloques HTML con Shiki |
 
 ### Variables de entorno (`.env`)
 
@@ -125,7 +123,7 @@ En este proyecto, `src/spa/spa.js` concentra esa configuración; `src/main.js` c
 
 ### Propiedades de cada ruta (`Route`)
 
-`id`, `path`, `pageTitle`, `headerTitle`, `favicon`, `components`, `pagesComponents`, `styles`, `scripts`, `libs`, `MarkdownShikiHtml`.
+`id`, `path`, `pageTitle`, `headerTitle`, `favicon`, `components`, `styles`, `scripts`, `libs`.
 
 ---
 
@@ -157,13 +155,11 @@ jquery-spa-with-method-load-from-jquery-v4/
 │   │   └── jquery.spa-with-method-load-from-jquery.js
 │   ├── routes/                       # Manifiesto y módulos de ruta
 │   ├── pages/                        # Shell HTML por vista
-│   ├── pages-components/             # Contenido inyectado en cada vista
 │   ├── components/                   # Layout (header, navbar, footer…)
 │   ├── scripts/                      # JS por página
 │   ├── scss/                         # Estilos SCSS
 │   ├── effects/effect-loading-page.js
 │   ├── libs/                         # jQuery, jQuery UI, loaders ESM
-│   ├── markdown-shiki/               # HTML generado con Shiki
 │   └── services/                     # PHP de ejemplo (opcional)
 │
 ├── app/                              # Artefacto de desarrollo (Gulp)
@@ -171,8 +167,7 @@ jquery-spa-with-method-load-from-jquery-v4/
 ├── assets/                           # Imágenes, fuentes, favicons
 ├── types/                            # Tipos JSDoc
 ├── server/                           # dev-server, preview-server
-├── gulpfile.js
-└── generate-markdown-shiki.js
+└── gulpfile.js
 ```
 
 ---
@@ -180,9 +175,8 @@ jquery-spa-with-method-load-from-jquery-v4/
 ## Pipeline de build
 
 1. **`pnpm dev`** — Gulp copia y compila `src/` → `app/`; BrowserSync recarga al cambiar archivos.
-2. **`pnpm code-highlight`** — Genera bloques Shiki en `app/markdown-shiki/` a partir de las rutas.
-3. **`pnpm build`** — Limpia `dist/`, regenera `app/` y minifica HTML, CSS y JS hacia `dist/`.
-4. **`pnpm preview`** — Sirve `dist/` con fallback SPA para validar el build.
+2. **`pnpm build`** — Limpia `dist/`, regenera `app/` y minifica HTML, CSS y JS hacia `dist/`.
+3. **`pnpm preview`** — Sirve `dist/` con fallback SPA para validar el build.
 
 ---
 
