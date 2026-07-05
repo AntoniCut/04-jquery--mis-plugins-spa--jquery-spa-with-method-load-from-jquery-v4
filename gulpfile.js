@@ -19,8 +19,6 @@ import plumber from 'gulp-plumber';
 import fs from 'fs';
 import path from 'node:path';
 
-import { generateMarkdownShiki } from './generate-markdown-shiki.js';
-
 
 /**  -----  desestructuración de métodos de Gulp  ----- */
 const { src, dest, watch, series, parallel } = gulp;
@@ -89,14 +87,8 @@ const paths = {
         libsDir: path.join('src', 'libs'),
         libs: path.posix.join('src', 'libs', '**/*'),
 
-        markdownShikiDir: path.join('src', 'markdown-shiki'),
-        markdownShiki: path.posix.join('src', 'markdown-shiki', '**/*'),
-
         pagesDir: path.join('src', 'pages'),
         pages: path.posix.join('src', 'pages', '**/*'),
-
-        pagesComponentsDir: path.join('src', 'pages-components'),
-        pagesComponents: path.posix.join('src', 'pages-components', '**/*'),
 
         pdfsDir: path.join('src', 'pdfs'),
         pdfs: path.posix.join('src', 'pdfs', '**/*'),
@@ -346,14 +338,8 @@ export const copyFonts = createCopyTask('copyFonts', { glob: paths.src.fonts, ch
 /** Copia src/libs/ → app/libs/. */
 export const copyLibs = createCopyTask('copyLibs', { glob: paths.src.libs, checkPath: paths.src.libsDir, binary: true });
 
-/** Copia src/markdown-shiki/ → app/markdown-shiki/. */
-export const copyMarkdownShiki = createCopyTask('copyMarkdownShiki', { glob: paths.src.markdownShiki, checkPath: paths.src.markdownShikiDir });
-
 /** Copia src/pages/ → app/pages/. */
 export const copyPages = createCopyTask('copyPages', { glob: paths.src.pages, checkPath: paths.src.pagesDir });
-
-/** Copia src/pages-components/ → app/pages-components/. */
-export const copyPagesComponents = createCopyTask('copyPagesComponents', { glob: paths.src.pagesComponents, checkPath: paths.src.pagesComponentsDir });
 
 /** Copia src/pdfs/ → app/pdfs/. */
 export const copyPdfs = createCopyTask('copyPdfs', { glob: paths.src.pdfs, checkPath: paths.src.pdfsDir, binary: true });
@@ -489,24 +475,7 @@ export const styles = parallel(css, cssPages);
 */
 
 
-/**
- * --------------------------------
- * -----  `generateShiki()`  -----
- * --------------------------------
- * - Genera los bloques HTML resaltados con Shiki en src/markdown-shiki/.
- * - Debe ejecutarse DESPUÉS de `buildSources` (que compila SCSS) y ANTES de
- *   `copyMarkdownShiki` (que copia el HTML recién generado a app/markdown-shiki/).
- * @returns {Promise<void>}
- */
-const generateShiki = async () => {
-    await generateMarkdownShiki();
-};
-
-generateShiki.displayName = 'generateShiki';
-
-
 //  buildSources: copias + compilación SCSS en paralelo (produce app/css/)
-//  No incluye copyMarkdownShiki: el HTML de Shiki se genera después.
 const buildSources = parallel(
     copyComponents,
     copyEffects,
@@ -514,7 +483,6 @@ const buildSources = parallel(
     copyLibs,
     copyVendorModules,
     copyPages,
-    copyPagesComponents,
     copyPdfs,
     copyPlugins,
     copyRoutes,
@@ -526,14 +494,8 @@ const buildSources = parallel(
 );
 
 
-//  copyAll: buildSources → generateShiki → copyMarkdownShiki
-//  generateShiki genera el HTML de Shiki desde los fuentes; copyMarkdownShiki
-//  copia el HTML recién generado a app/markdown-shiki/.
-const copyAll = series(
-    buildSources,
-    generateShiki,
-    copyMarkdownShiki,
-);
+//  copyAll: buildSources (copias + compilación SCSS en paralelo)
+const copyAll = buildSources;
 
 
 
@@ -555,9 +517,7 @@ const watchTask = () => {
         [paths.src.fonts, copyFonts],
         [paths.src.libs, copyLibs],
         [['package.json', 'pnpm-lock.yaml'], copyVendorModules],
-        [paths.src.markdownShiki, copyMarkdownShiki],
         [paths.src.pages, copyPages],
-        [paths.src.pagesComponents, copyPagesComponents],
         [paths.src.pdfs, copyPdfs],
         [paths.src.plugins, copyPlugins],
         [paths.src.routes, copyRoutes],
@@ -565,7 +525,7 @@ const watchTask = () => {
         [paths.src.services, copyServices],
         [paths.src.scripts, copyScripts],
         [paths.src.main, copyMain],
-        [paths.src.scssAll, series(styles, generateShiki, copyMarkdownShiki)],
+        [paths.src.scssAll, styles],
     ];
 
     for (const [glob, task] of watchers) {
