@@ -12,6 +12,8 @@
 /** @typedef {import('../../../../types/index.js').RouteStyle} RouteStyle */
 /** @typedef {import('../../../../types/index.js').RouteLib} RouteLib */
 /** @typedef {import('../../../../types/index.js').Route} Route */
+/** @typedef {import('../../../../types/index.js').MarkdownShikiEntry} MarkdownShikiEntry */
+/** @typedef {import('../../../../types/index.js').PageComponentEntry} PageComponentEntry */
 
 
 /**
@@ -32,7 +34,7 @@
  *     - Efecto Loading para la carga inicial de la página.
  *     - 404NotFoundPage: Ruta para manejar páginas no encontradas.
  *     - Normalización de rutas y pathname para evitar problemas con slashes y base.
- *     - Notificación de carga de ruta mediante eventos personalizados.
+ *     - Notificación de carga de ruta mediante eventos personalizados (`spa:route-loaded`, `spa:first-route-loaded`, `spa:route-load-error`).
  *     - Manejo de errores en la carga de componentes y rutas.
  *     - Soporte para scripts clásicos y módulos ES6 (type="module").
  *     - Markdown con Shiki para código fuente resaltado.
@@ -108,6 +110,56 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
 
 
             /**
+             * ---------------------------------------------------
+             * -----  `collapsePathnameSlashes(pathname = '')`  -----
+             * ---------------------------------------------------
+             * - Colapsa barras duplicadas en un pathname del navegador.
+             * - Evita valores como `//mis-plugins-spa/...` que history API
+             *   interpreta como URL protocol-relative (origen distinto → SecurityError).
+             * @param {string} pathname - Pathname crudo
+             * @returns {string} - Pathname con una sola barra inicial
+             */
+            const collapsePathnameSlashes = (pathname = '') => {
+
+                let p = String(pathname || '');
+
+                if (!p)
+                    return '/';
+
+                p = p.replace(/\/+/g, '/');
+
+                if (!p.startsWith('/'))
+                    p = `/${p}`;
+
+                return p;
+
+            };
+
+
+            /**
+             * ---------------------------------------------------
+             * -----  `safeHistoryPathname(pathname = '')`  -----
+             * ---------------------------------------------------
+             * - Pathname seguro para history.pushState/replaceState (misma origin).
+             * @param {string} pathname - Pathname crudo o relativo
+             * @returns {string} - Pathname absoluto normalizado
+             */
+            const safeHistoryPathname = (pathname = '') => {
+
+                try {
+
+                    return new URL(collapsePathnameSlashes(pathname), location.origin).pathname;
+
+                } catch (e) {
+
+                    return collapsePathnameSlashes(pathname);
+
+                }
+
+            };
+
+
+            /**
              * -----------------------------------
              * -----  `normalize(raw = '')`  -----
              * -----------------------------------
@@ -127,9 +179,21 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                 /** @type {string} - `Cadena normalizada` */
                 let s = String(raw || '');
 
-                //  -----  quitar base si está presente  -----
-                if (base && s.startsWith(base))
-                    s = s.slice(base.length);
+                //  -----  colapsar slashes duplicados en pathnames absolutos del navegador  -----
+                if (s.startsWith('/'))
+                    s = collapsePathnameSlashes(s);
+
+                //  -----  quitar base si está presente (también con base/path colapsados)  -----
+                if (base) {
+
+                    const normalizedBase = collapsePathnameSlashes(base).replace(/\/$/, '');
+
+                    if (normalizedBase && s.startsWith(normalizedBase))
+                        s = s.slice(normalizedBase.length);
+                    else if (s.startsWith(base))
+                        s = s.slice(base.length);
+
+                }
 
                 //  -----  quitar leading/trailing slash  -----
                 s = s.replace(/^\/|\/$/g, '');
@@ -161,14 +225,17 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                 const trimmed = routePath ? `/${String(routePath).replace(/^\/|\/$/g, '')}` : '';
 
                 //  -----  Construir pathname absoluto y normalizado  -----
+                const absoluteBase = base.startsWith('/') ? base : `/${base}`;
+
                 try {
 
-                    return new URL(base + trimmed, location.origin).pathname;
+                    return safeHistoryPathname(new URL(absoluteBase + trimmed, location.origin).pathname);
 
                 } catch (e) {
 
                     //  -----  fallback básico  -----
-                    return (base + trimmed).replace(/\/\/+/g, '/');
+                    return safeHistoryPathname(absoluteBase + trimmed);
+
                 }
 
             };
@@ -258,8 +325,43 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                 return (settings.routeManifest || []).find(entry =>
                     entry?.id === '404NotFoundPage' ||
                     normalize(entry?.path) === '404' ||
+                    normalize(entry?.path) === '404-not-found' ||
                     /404/i.test(String(entry?.id || ''))
                 );
+
+            };
+
+
+            /**
+             * ----------------------------------------------------------
+             * -----  `notifyRouteLoadError(route, error, source)`  -----
+             * ----------------------------------------------------------
+             * - Notifica un error durante la carga de ruta.
+             * - Emite `spa:route-load-error` con detalles del fallo.
+             * - Si ocurre en la carga inicial, desbloquea el loader con fallback seguro.
+             * @param {Route|undefined} route
+             * @param {unknown} error
+             * @param {string} source
+             */
+            const notifyRouteLoadError = (route, error, source) => {
+
+                console.error('Error cargando ruta SPA:', error);
+
+                document.dispatchEvent(
+                    new CustomEvent('spa:route-load-error', {
+                        detail: {
+                            id: route?.id || null,
+                            path: route?.path || window.location.pathname,
+                            source,
+                            message: error instanceof Error ? error.message : String(error || 'Error desconocido')
+                        }
+                    })
+                );
+
+                if (!window.__spaFirstRouteLoaded) {
+                    window.__spaFirstRouteLoaded = true;
+                    document.dispatchEvent(new CustomEvent('spa:first-route-loaded'));
+                }
 
             };
 
@@ -281,6 +383,7 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
 
                 if (!entry404) {
                     console.error(`No existe ruta 404 configurada (source: ${source}).`);
+                    notifyRouteLoadError(undefined, new Error('No existe ruta 404 configurada.'), source);
                     return undefined;
                 }
 
@@ -289,17 +392,19 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
 
                 if (!route404) {
                     console.error(`No se pudo importar la ruta 404 (source: ${source}).`);
+                    notifyRouteLoadError(undefined, new Error('No se pudo importar la ruta 404.'), source);
                     return undefined;
                 }
 
                 try {
 
-                    await loadContent(route404);
+                    await loadContent(route404, source);
                     return route404;
 
                 } catch (err) {
 
                     console.error(`Error loadContent 404 (${source}):`, err);
+                    notifyRouteLoadError(route404, err, source);
                     return undefined;
                 }
 
@@ -308,10 +413,10 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
 
 
             /*
-                ------------------------------------------------------------------------
-                ----------  Carga de contenido dinámico, Componentes del DOM  ----------
-                ----------  y Metadatos de la Ruta (título, favicon, CSS, JS)  ---------
-                ------------------------------------------------------------------------
+                *  ---------------------------------------------------------------  *
+                *  -----  Carga de contenido dinámico, Componentes del DOM   -----  *
+                *  -----  y Metadatos de la Ruta (título, favicon, CSS, JS)  -----  *
+                *  ---------------------------------------------------------------  *
             */
 
 
@@ -319,15 +424,16 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
             * ----------------------------------
             * -----  `loadContent(route)`  -----
             * ----------------------------------
-            * 
+            *
             * - Carga contenido con o sin ViewTransition.
             * - Siempre devuelve una Promise.
-            * 
-            * @param {Route} route
+            *
+            * @param {Route} route - `Ruta a cargar`
+            * @param {'init'|'click'|'popstate'} [source='click'] - `Origen de la navegación. Se propaga a applyRouteMeta para decidir si se hace pushState ('click') o no ('init' / 'popstate').`
             * @returns {Promise<void>}
             */
 
-            const loadContent = (route) => {
+            const loadContent = (route, source = 'click') => {
 
 
                 //  -----  Devolver una promesa que se resuelve cuando la carga y transición (si existe) terminan  -----
@@ -396,8 +502,11 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                             console.warn(`La ruta ${route.id} no contiene 'components'`);
                             console.log('\n');
 
-                            //  -----  Aplicar metadatos de la ruta (título, favicon, css, scripts, URL) -----
-                            applyRouteMeta(route);
+                            //  -----  Aplicar metadatos antes que pagesComponents (paridad con spa-loader-content-html)  -----
+                            await applyRouteMeta(route, source);
+
+                            //  -----  Renderizar componentes de página (pagesComponents) aunque la ruta no defina 'components'  -----
+                            await renderPageComponents(route);
 
                             return;
 
@@ -412,11 +521,22 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                         */
                         try {
 
-                            //  ----- Cargar todos los componentes declarados en la ruta -----
+                            //  ----- Cargar todos los componentes declarados en la ruta (secuencial) -----
                             await loadComponentsDom(route.components);
 
-                            //  -----  Renderizar Markdown Shiki (código fuente resaltado)  -----
-                            await renderMarkdownShiki(route);
+                            //  -----  Inicializar acciones del navbar  -----
+                            try {
+                                actionsNavbar();
+                            } catch (err) {
+                                console.warn('actionsNavbar falló (probablemente falta .navbar__container en la vista):', err);
+                            }
+
+                            //  -----  Cambio de themes jQuery UI  -----
+                            try {
+                                changeThemesJQueryUI();
+                            } catch (err) {
+                                console.warn('changeThemesJQueryUI falló:', err);
+                            }
 
                             //  -----  Cargar libs de jQuery UI bajo demanda para esta ruta  -----
                             await loadLibsByRoute(route.libs);
@@ -424,20 +544,19 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                             //  -----  Habilitar elementos draggables tras cargar el DOM y las libs  -----
                             enableDraggables();
 
-                            //  -----  Inicializar acciones del navbar  -----
-                            actionsNavbar();
+                            //  -----  Aplicar metadatos de la ruta (título, favicon, css, shiki, scripts, URL)  -----
+                            await applyRouteMeta(route, source);
 
-                            //  -----  Cambio de themes jQuery UI  -----
-                            changeThemesJQueryUI();
-
-                            //  -----  Aplicar metadatos de la ruta (título, favicon, css, scripts, URL)  -----
-                            applyRouteMeta(route);
+                            //  -----  Renderizar componentes de página (pagesComponents) dentro de la vista ya cargada  -----
+                            await renderPageComponents(route);
 
                         } catch (err) {
 
                             console.log('\n');
                             console.error('Error en loadComponentsDom:', err);
                             console.log('\n');
+
+                            notifyRouteLoadError(route, err, source);
 
                             //  -----  Propagar error para que lo capture la Promise externa  -----
                             throw err;
@@ -457,6 +576,7 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
 
                         } catch (err) {
 
+                            notifyRouteLoadError(route, err, source);
                             reject(err);
                         }
 
@@ -467,7 +587,7 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                     // ----- Si Existe ViewTransition -----
                     try {
 
-                        /** @type {ViewTransition|null} - `Iniciar ViewTransition y cargar componentes/metadatos dentro de la transición. La promesa se resuelve cuando la transición termina.`
+                        /**- `Iniciar ViewTransition y cargar componentes/metadatos dentro de la transición. La promesa se resuelve cuando la transición termina.`
                          * @return {Promise<void>}
                          */
                         const transition = document.startViewTransition(() => loadComponentsAndMeta());
@@ -481,7 +601,10 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                                     notifyRouteLoaded();
                                     resolve();
                                 })
-                                .catch(reject);
+                                .catch((err) => {
+                                    notifyRouteLoadError(route, err, source);
+                                    reject(err);
+                                });
 
                         else {
                             notifyRouteLoaded();
@@ -501,9 +624,10 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                             notifyRouteLoaded();
                             resolve();
 
-                        } catch (err) {
+                        } catch (innerErr) {
 
-                            reject(err);
+                            notifyRouteLoadError(route, innerErr, source);
+                            reject(innerErr);
 
                         }
 
@@ -639,21 +763,15 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
              * -----  `loadComponentsDom(components)`  -----
              * ---------------------------------------------
              * 
-             * Carga todos los componentes pasados en el objeto `components`.
+             * Carga todos los componentes pasados en el objeto `components` de forma secuencial.
              * components: { "#selector": "/ruta/archivo.html", ... }
-             * Devuelve una promesa que se resuelve cuando TODOS los componentes se cargan.
              * 
              * @param {RouteComponents} components - `Objeto con selectores y URLs de componentes a cargar en el DOM`
-             * @returns {Promise<void[]>} - `Promesa que se resuelve cuando todos los componentes se han cargado.`
+             * @returns {Promise<void>} - `Promesa que se resuelve cuando todos los componentes se han cargado.`
              * 
              */
 
-            const loadComponentsDom = (components) => {
-
-
-                /** @type {Promise<void>[]} - `Array de promesas para cada carga de componente.` */
-                const promises = [];
-
+            const loadComponentsDom = async (components) => {
 
                 /*
                     ------------------------------------------------------
@@ -662,43 +780,40 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                 */
                 for (const selector in components) {
 
-
                     //  -----  Verificar que la propiedad pertenece a components  -----
                     if (!Object.prototype.hasOwnProperty.call(components, selector))
                         continue;
 
-
                     /** @type {string|undefined} - `URL del componente a cargar.` */
                     const url = components[selector];
 
+                    /** @type {JQuery<HTMLElement>} - `Contenedor del componente` */
+                    const $container = $(selector);
 
-                    //  -----  Si no hay URL definida para el selector, mostrar advertencia y limpiar el contenedor  -----
+                    //  -----  Si no hay URL definida, ocultar contenedor y continuar  -----
                     if (!url) {
 
                         console.log('\n');
-                        console.warn(`No hay URL para el selector ${selector}`);
+                        console.warn(`No hay URL para el selector ${selector}. Ocultando contenedor.`);
                         console.log('\n');
 
-                        //  -----  Limpiar el contenedor del componente si la URL es undefined  -----
-                        $(selector).empty();
-
-                        //  -----  Saltar a la siguiente iteración  -----
+                        $container.hide().empty();
                         continue;
 
                     }
 
+                    //  -----  Restaurar visibilidad antes de cargar  -----
+                    $container.show();
 
-                    /** @type {Promise<void>} - `Promesa que carga el componente en el selector correspondiente.` */
-                    const promise = new Promise((resolve, reject) => {
+                    await new Promise((resolve, reject) => {
 
-                        
                         /*
                             *  ------------------------------------------------------------  *
                             *  -----  Cargamos componente del DOM con jQuery .load()  -----  *
                             *  ------------------------------------------------------------  *
                         */
 
-                        $(selector).load(url, function (response, status, xhr) {
+                        $container.load(url, function (response, status, xhr) {
 
                             //  -----  Si ocurre un error al cargar el componente  -----
                             if (status === "error") {
@@ -708,7 +823,7 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                                 console.log('\n');
 
                                 //  -----  Mostrar mensaje de error en el contenedor  -----
-                                $(selector).html(`<p>Error 404 al cargar: ${url}</p>`);
+                                $container.html(`<p>Error 404 al cargar: ${url}</p>`);
 
                                 return reject(new Error(`Error al cargar ${url}`));
 
@@ -724,13 +839,7 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
 
                     });
 
-                    //  -----  Añadir la promesa al array  -----
-                    promises.push(promise);
-
                 }
-
-                //  -----  Devolver la promesa que se resuelve cuando todas las cargas terminan  -----
-                return Promise.all(promises);
 
             };
 
@@ -753,6 +862,7 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
 
                 for (const entry of route.MarkdownShikiHtml) {
 
+                    /** @type {MarkdownShikiEntry} */
                     const { url, target } = entry;
 
                     if (!url || !target) continue;
@@ -780,17 +890,75 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
 
 
             /**
+             * -----------------------------------------------
+             * -----  `renderPageComponents(route)`  ----------
+             * -----------------------------------------------
+             * @async
+             * - Renderiza componentes HTML dentro de la propia vista (no del layout).
+             * - Cada entrada de `route.pagesComponents` es un objeto `{ url, target }`
+             *   donde `target` es un selector CSS del contenedor destino
+             *   (p.ej. `'[data-component-page="htmlPage"]'`).
+             * - Delega la inyección en `loadComponentsDom` para mantener el mismo
+             *   comportamiento que los componentes del layout (visibilidad, inyección,
+             *   reescritura de URLs y manejo de errores).
+             * - Permite renderizar más de un componente por página (array de entradas).
+             * @param {Route} route - Ruta de la cual cargar los componentes de página.
+             * @returns {Promise<void>} - Promesa que se resuelve cuando todos los
+             *   componentes de página se han renderizado (o se han omitido/amañado errores).
+             */
+            const renderPageComponents = async (route) => {
+
+                //  -----  Validación (caso válido: la mayoría de rutas no definen pagesComponents)  -----
+                if (!route.pagesComponents || !Array.isArray(route.pagesComponents))
+                    return;
+
+                //  -----  Construir un objeto { selector: url } para reutilizar loadComponentsDom  -----
+                /** @type {Record<string, string>} */
+                const componentsMap = {};
+
+                //  -----  Iterar sobre cada entrada de pagesComponents  -----
+                for (const entry of route.pagesComponents) {
+
+                    /** @type {string|undefined} - URL del componente de página */
+                    const url = entry?.url;
+
+                    /** @type {string|undefined} - Selector CSS del contenedor destino */
+                    const target = entry?.target;
+
+                    //  -----  Validación de la entrada: debe tener url y target  -----
+                    if (!url || !target) {
+                        console.warn('⚠️ Entrada pagesComponents incompleta (falta url o target). Se omite.');
+                        continue;
+                    }
+
+                    //  -----  Acumular en el mapa selector -> url  -----
+                    componentsMap[target] = url;
+
+                }
+
+                //  -----  Si no hay entradas válidas, salir sin hacer nada  -----
+                if (Object.keys(componentsMap).length === 0)
+                    return;
+
+                //  -----  Cargar todos los componentes de página usando el mismo mecanismo que el layout  -----
+                await loadComponentsDom(componentsMap);
+
+            };
+
+
+            /**
              * -------------------------------------
              * -----  `applyRouteMeta(route)`  -----
              * -------------------------------------
-             * 
+             *
              * - `Función para aplicar metadatos de la ruta (título, favicon, URL, etc.)`
              * @async
              * @param {Route} route - `Objeto de la ruta actual con posibles propiedades: headerTitle, pageTitle, favicon, styles, scripts, path, id.`
-             * 
+             * @param {'init'|'click'|'popstate'} [source='click'] - `Origen de la navegación. Solo 'click' empuja el historial; 'init' y 'popstate' no lo tocan (init lo gestiona externamente con replaceState, popstate ya viene del navegador).`
+             *
              */
 
-            const applyRouteMeta = async (route) => {
+            const applyRouteMeta = async (route, source = 'click') => {
 
 
                 //  -----  Título del Header y Footer  -----
@@ -809,9 +977,12 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                 if (route.styles)
                     loadStylesheetByPage(route.styles);
 
+                //  -----  Markdown Shiki  -----
+                await renderMarkdownShiki(route);
+
                 //  -----  JS  -----
                 if (route.scripts)
-                    loadScriptsByPage(route.scripts);
+                    await loadScriptsByPage(route.scripts);
 
 
                 /*
@@ -825,11 +996,43 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                 const newPathname = buildPathname(route.path || '');
 
 
-                //  -----  Evitar push duplicado  -----
-                if (window.location.pathname !== newPathname) {
+                /**
+                 * -------------------------------------
+                 * -----  `stripTrailingSlash(p)`  -----
+                 * -------------------------------------
+                 * - Compara dos pathnames ignorando el trailing slash final.
+                 * - Evita pushState spurious cuando la URL del navegador difiere
+                 *   solo en la barra final (p.ej. /base/ vs /base).
+                 * @param {string} p - Pathname a normalizar
+                 * @returns {string} - Pathname sin trailing slash (raíz → '/')
+                 */
+                const stripTrailingSlash = (p) => {
+                    const s = String(p || '').replace(/\/$/, '');
+                    return s === '' ? '/' : s;
+                };
 
-                    //  -----  Realizar pushState con el pathname normalizado  -----
-                    history.pushState({ id: route.id, path: newPathname }, '', newPathname);
+
+
+                //  -----  En 'init' y 'popstate' NO empujamos historial:  -----
+                //  -----  'init'     lo gestiona externamente con replaceState       -----
+                //  -----  'popstate' ya viene actualizado por el navegador            -----
+                if (source === 'click'
+                    && stripTrailingSlash(safeHistoryPathname(window.location.pathname)) !== stripTrailingSlash(newPathname)) {
+
+                    /** @type {RouteManifest|undefined} - `Entrada del manifest para guardar routeFile en el historial` */
+                    const manifestEntry = findManifestEntryById(route.id);
+
+                    //  -----  Realizar pushState con pathname, routeFile y favicon para popstate rápido  -----
+                    history.pushState(
+                        {
+                            id: route.id,
+                            path: newPathname,
+                            routeFile: manifestEntry?.file || null,
+                            favicon: route.favicon || null
+                        },
+                        '',
+                        newPathname
+                    );
 
                     console.log('\n');
                     console.warn('navigate ==>', route.id, newPathname);
@@ -863,9 +1066,9 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
 
 
             /*
-                -------------------------------------------------------------------------------------
-                ----------  Elementos Draggables, Acciones del Navbar, Actualizar Favicon  ----------
-                -------------------------------------------------------------------------------------
+                *  --------------------------------------------------------------------------------  *
+                *  -----  Elementos Draggables, Acciones del Navbar, Actualizar Favicon  ----------  *
+                *  --------------------------------------------------------------------------------  *
             */
 
 
@@ -873,7 +1076,6 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
              *  -----------------------------------
              *  -----  `enableDraggables()`   -----
              *  -----------------------------------
-             *  
              * - Habilita la funcionalidad de elementos arrastrables.
              * - Busca cualquier elemento con la clase `.draggable` y aplica .draggable() (jQuery UI).
              * - Esto evita depender de selectores rígidos.
@@ -1217,17 +1419,27 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
              * --------------------------------------
              * -----  `updateFavicon(favicon)`  -----
              * --------------------------------------
-             * 
-             * - Actualiza el favicon añadiendo un query para forzar recarga
-             * 
+             *
+             * - Actualiza el favicon del documento.
+             * - Solo modifica el `href` cuando el favicon cambia realmente;
+             *   esto evita el parpadeo (y la recarga innecesaria) producido
+             *   al inyectar un `?t=Date.now()` distinto en cada navegación,
+             *   incluso en popstate/atrás. El navegador ya cachea por URL:
+             *   cambiar de `html-icon.svg` a `css-icon.svg` refresca el icono,
+             *   pero repetir la misma URL no vuelca a descargar.
+             *
              * @param {string} favicon - URL del nuevo favicon a cargar
              */
 
             const updateFavicon = (favicon) => {
 
 
+                //  -----  URL absoluta del nuevo favicon, resuelta contra baseURI: permite comparar de forma fiable ruta relativa (index.html) vs absoluta (ruta) cuando apuntan al mismo archivo  -----
+                /** @type {string} - `URL absoluta del nuevo favicon` */
+                const newAbsolute = new URL(favicon, document.baseURI).href;
+
                 /** @type {JQuery<HTMLLinkElement>} - `Elemento link del favicon` */
-                let $favicon = $('link[rel="icon"]');
+                let $favicon = $('link[rel~="icon"]');
 
                 //  -----  Si no existe el favicon, lo creamos  -----
                 if ($favicon.length === 0) {
@@ -1238,7 +1450,6 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
 
                     //  -----  Configurar el nuevo elemento link para el favicon  -----
                     link.rel = "icon";
-                    link.type = "image/x-icon";
 
                     //  -----  Añadir el nuevo elemento link al head del documento  -----
                     document.head.appendChild(link);
@@ -1247,17 +1458,22 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                     $favicon = $(link);
                 }
 
-                //  -----  Actualizar el href del favicon con un query para forzar recarga  -----
-                $favicon.attr('href', `${favicon}?t=${Date.now()}`);
+                //  -----  Comparar la URL ABSOLUTA YA RESUELTA (prop('href'), no attr) sin query string contra la nueva  -----
+                /** @type {string} - `href absoluto actual sin query (?...)` */
+                const currentAbsolute = String($favicon.prop('href') || '').split('?')[0];
+
+                //  -----  Actualizar el href solo si el archivo cambia realmente: evita reasignar el atributo (relativo -> absoluto del mismo archivo), que provoca re-descarga y parpadeo  -----
+                if (currentAbsolute !== newAbsolute)
+                    $favicon.attr('href', favicon);
 
             };
 
 
 
             /*
-                -----------------------------------
-                ----------  STYLESHEETS  ----------
-                -----------------------------------
+                *  -------------------------  *
+                *  -----  STYLESHEETS  -----  *
+                *  -------------------------  *
             */
 
 
@@ -1346,9 +1562,9 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
 
 
             /*
-                *  -------------------------------
-                *  ----------  SCRIPTS  ----------
-                *  -------------------------------
+                *  ---------------------  *
+                *  -----  SCRIPTS  -----  *
+                *  ---------------------  *
             */
 
 
@@ -1376,7 +1592,7 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
 
                 //  -----  Si no hay scripts, salir  -----
                 if (!scripts)
-                    return;
+                    return Promise.resolve();
 
 
                 //  -----  Aceptar array o diccionario  -----
@@ -1398,6 +1614,8 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                     scriptQueue = scriptQueue.then(() => loadScripts(script));
 
                 });
+
+                return scriptQueue;
             };
 
 
@@ -1418,7 +1636,7 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                 const scriptUrl = String(scriptOptions?.src || '');
 
                 /** @type {'classic'|'module'} - `Tipo de carga del script` */
-                const scriptType = scriptOptions?.type === 'module' ? 'module' : 'classic';
+                const scriptType = (scriptOptions?.type === 'module' || scriptOptions?.isModule) ? 'module' : 'classic';
 
                 /** @type {string|null} - `Export opcional del módulo a ejecutar tras la carga` */
                 const exportFunctionName = scriptOptions?.exportFunctionName || null;
@@ -1531,9 +1749,9 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
 
 
             /**
-             * ----------------------------------------
-             * -----  `loadLibsByRoute(libs)`  ---------
-             * ----------------------------------------
+             * -------------------------------------
+             * -----  `loadLibsByRoute(libs)`  -----
+             * -------------------------------------
              * @async
              * - Carga los módulos de jQuery UI declarados en `route.libs` bajo demanda.
              * - Se ejecuta después de que el DOM de la ruta está completamente renderizado.
@@ -1578,8 +1796,8 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
             const init = () => {
 
 
-                /** @type {string} - `Ruta normalizada actual (sin base ni barra final)` */
-                const initialPath = window.location.pathname;
+                /** @type {string} - `Pathname actual del navegador, normalizado para history API` */
+                const initialPath = safeHistoryPathname(window.location.pathname);
 
                 /** @type {RouteManifest|undefined} - `Entrada inicial del manifest` */
                 const entry = findManifestEntryByPath(initialPath);
@@ -1590,7 +1808,7 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                         .then((route) => {
 
                             if (route)
-                                return loadContent(route).then(() => route);
+                                return loadContent(route, 'init').then(() => route);
 
                             return loadNotFoundRoute('init');
                         })
@@ -1598,9 +1816,9 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
 
                             if (!route) {
                                 history.replaceState(
-                                    { id: null, path: window.location.pathname },
+                                    { id: null, path: initialPath },
                                     '',
-                                    window.location.pathname
+                                    initialPath
                                 );
                                 return;
                             }
@@ -1608,7 +1826,7 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                             const initialPathname = buildPathname(route.path || entry.path || '');
 
                             history.replaceState(
-                                { id: route.id, path: initialPathname, routeFile: entry.file },
+                                { id: route.id, path: initialPathname, routeFile: entry.file, favicon: route.favicon || null },
                                 '',
                                 initialPathname
                             );
@@ -1616,6 +1834,7 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                         .catch((err) => {
 
                             console.error('Error cargando ruta inicial', err);
+                            notifyRouteLoadError(undefined, err, 'init');
                             loadNotFoundRoute('init');
                         });
 
@@ -1625,9 +1844,9 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                 loadNotFoundRoute('init');
 
                 history.replaceState(
-                    { id: null, path: window.location.pathname },
+                    { id: null, path: initialPath },
                     '',
-                    window.location.pathname
+                    initialPath
                 );
 
             };
@@ -1635,33 +1854,60 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
 
 
             /*
-                -------------------------------
-                ----------  EVENTOS  ----------
-                -------------------------------
+                *  ---------------------  *
+                *  -----  EVENTOS  -----  *
+                *  ---------------------  *
             */
 
 
             /*
                 -------------------------------------------------------------------
                 -----  Manejadores de navegación  -  clicks  ----------------------
-                -----  Enlaces: a[data-id] => data-id corresponde a route.id  -----
+                -----  Enlaces: a[data-id] o a[data-route]  -----------------------
                 -------------------------------------------------------------------
             */
-            $(document).on('click', 'a[data-id]', async function (event) {
+            $(document).on('click', 'a[data-id], a[data-route]', async function (event) {
 
                 event.preventDefault();
 
-                /** @type {string} - `ID de la ruta desde el atributo data-id` */
+                /** @type {string|undefined} - `Nombre del archivo de ruta desde data-route` */
+                const routeFile = $(this).data('route');
+
+                /** @type {string|undefined} - `ID de la ruta desde el atributo data-id` */
                 const dataId = $(this).data('id');
 
                 /** @type {RouteManifest|undefined} - `Entrada del manifest correspondiente al data-id` */
-                const entry = findManifestEntryById(String(dataId));
+                const entry = dataId ? findManifestEntryById(String(dataId)) : undefined;
 
 
                 //  -----  ocultar menus tipo navbar compact  -----
                 $('.navbar__container').slideUp();
 
-                //  -----  Cargar la ruta si existe  -----
+                //  -----  Carga directa por data-route (import dinámico por nombre de archivo)  -----
+                if (routeFile) {
+
+                    try {
+
+                        const route = await loadRouteModule(String(routeFile));
+
+                        if (!route) {
+                            await loadNotFoundRoute('click');
+                            return;
+                        }
+
+                        await loadContent(route, 'click');
+
+                    } catch (err) {
+
+                        console.error('Error loadContent (click, data-route):', err);
+                        notifyRouteLoadError(undefined, err, 'click');
+                        await loadNotFoundRoute('click');
+                    }
+
+                    return;
+                }
+
+                //  -----  Cargar la ruta por data-id si existe en el manifest  -----
                 if (entry) {
 
                     try {
@@ -1673,11 +1919,13 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                             return;
                         }
 
-                        await loadContent(route);
+                        await loadContent(route, 'click');
 
                     } catch (err) {
 
                         console.error('Error loadContent (click):', err);
+                        notifyRouteLoadError(undefined, err, 'click');
+                        await loadNotFoundRoute('click');
                     }
                 }
 
@@ -1697,14 +1945,46 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
             */
             window.addEventListener('popstate', async (e) => {
 
-                /** @type {string} - `Ruta normalizada desde el state o la URL actual; usar state.path si está presente, si no usar location.pathname` */
+                //  -----  Actualizar el favicon inmediatamente (síncronamente) desde el state para evitar parpadeo durante la carga asíncrona (lazy) del módulo de ruta  -----
+                if (e.state?.favicon)
+                    updateFavicon(e.state.favicon);
+
+                /** @type {string|undefined} - `Nombre del archivo de ruta guardado en el historial` */
+                const routeFile = e.state?.routeFile;
+
+                /** @type {string} - `Ruta normalizada desde el state o la URL actual` */
                 const raw = e.state?.path ?? window.location.pathname;
 
                 /** @type {RouteManifest|undefined} - `Entrada de manifest para la URL actual` */
                 const entry = findManifestEntryByPath(raw);
 
-                //  ----- cargamos la ruta sin empujar otra entrada en el historial  ---------
-                //  ----- loadContent(route)  -  hace pushState solo si la ruta difiere  -----
+                //  -----  Importar directamente por routeFile si está en el state (más rápido, usa caché)  -----
+                if (routeFile) {
+
+                    try {
+
+                        const route = await loadRouteModule(String(routeFile));
+
+                        if (!route) {
+                            await loadNotFoundRoute('popstate');
+                            return;
+                        }
+
+                        await loadContent(route, 'popstate');
+
+                    } catch (err) {
+
+                        console.error('Error loadContent (popstate, routeFile):', err);
+                        notifyRouteLoadError(undefined, err, 'popstate');
+                        await loadNotFoundRoute('popstate');
+                    }
+
+                    return;
+                }
+
+                //  ----- cargamos la ruta SIN empujar otra entrada en el historial  ---------
+                //  ----- el navegador ya actualizó la URL y el state al navegar atrás/adelante  -----
+                //  ----- pasamos source='popstate' a loadContent para que applyRouteMeta NO haga pushState  -----
                 if (entry) {
 
                     try {
@@ -1716,11 +1996,13 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                             return;
                         }
 
-                        await loadContent(route);
+                        await loadContent(route, 'popstate');
 
                     } catch (err) {
 
                         console.error('Error loadContent (popstate):', err);
+                        notifyRouteLoadError(undefined, err, 'popstate');
+                        await loadNotFoundRoute('popstate');
                     }
                 }
 

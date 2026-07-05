@@ -6,10 +6,12 @@
 
 <div class="main__container">
 
-    <h2 class="main__title"> jQuery SPA With Method Load From jQuery v4 </h2>
+    
 
-        
     <div class="home-page">
+
+        <h2 class="main__title"> jQuery SPA With Method Load From jQuery v4 </h2>
+
 
         <!--  -----  Hero  -----  -->
         <div class="home-page__hero">
@@ -47,7 +49,8 @@
 
                 <article class="home-page__feature">
                     <span class="home-page__feature-icon" aria-hidden="true">🔌</span>
-                    <h4 class="home-page__feature-title">Plugin jQuery — <code>$.fn.spaWithMethodLoadFromJQuery</code></h4>
+                    <h4 class="home-page__feature-title">Plugin jQuery — <code>$.fn.spaWithMethodLoadFromJQuery</code>
+                    </h4>
                     <p class="home-page__feature-text">
                         Se registra como método del prototipo jQuery e inicializa la SPA sobre el contenedor
                         raíz (p. ej. <code>$('#layout').spaWithMethodLoadFromJQuery(options)</code>).
@@ -115,7 +118,8 @@
                     <h4 class="home-page__feature-title">CSS y JS por Ruta</h4>
                     <p class="home-page__feature-text">
                         Cada ruta puede declarar <code>styles</code> (array de <code>&#123; href &#125;</code>)
-                        y <code>scripts</code> (array de <code>&#123; src, type?, isModule?, exportFunctionName? &#125;</code>).
+                        y <code>scripts</code> (array de
+                        <code>&#123; src, type?, isModule?, exportFunctionName? &#125;</code>).
                         Los CSS se precargan con <code>&lt;link rel="preload"&gt;</code> antes de aplicarse.
                         Los scripts clásicos usan <code>$.getScript()</code>; los módulos ES6 usan <code>import()</code>
                         dinámico con ejecución opcional de <code>exportFunctionName</code>.
@@ -495,5 +499,72 @@
         </section>
 
     </div>
+
+   
+
+
+    <div class="home-demo">
+
+
+        <h2 class="main__title"> jQuery SPA With Method Load From jQuery v4 — Demo Scripts </h2>
+
+
+        <div class="home-page__hero">
+            <div class="home-page__hero-badge">
+                <span class="home-page__hero-tag" aria-hidden="true">SPA</span>
+                <h3 class="home-page__hero-title">jquery-spa-with-method-load-from-jquery</h3></h3>
+                <p class="home-page__hero-subtitle">Demo de scripts SPA v4</p>
+            </div>
+        </div>
+
+
+        <section class="home-page__intro">
+            <p class="home-page__intro-text">
+                Esta sección forma parte de la vista cargada en <strong>layoutMain</strong>. Los scripts
+                de la ruta se ejecutan con <strong>applyRouteMeta</strong> del plugin
+                <strong>spa-loader-content-html v3</strong>, cuando el DOM de la página ya está disponible.
+            </p>
+        </section>
+
+
+        <section class="home-page__features" data-home-demo="cjs">
+
+            <h3 class="home-page__features-title">Demo Scripts CJS</h3>
+
+            <p class="home-page__intro-text" data-home-demo-status="cjs">
+                Esperando <code>home.cjs.js</code>…
+            </p>
+
+            <div class="home-page__features-grid" data-home-demo-target="cjs"></div>
+
+        </section>
+
+
+        <section class="home-page__features" data-home-demo="esm">
+
+            <h3 class="home-page__features-title">Demo Scripts ESM</h3>
+
+            <p class="home-page__intro-text" data-home-demo-status="esm">
+                Esperando <code>home.esm.js</code>…
+            </p>
+
+            <div class="home-page__features-grid" data-home-demo-target="esm"></div>
+
+        </section>
+
+
+        <section class="home-page__tags-section">
+
+            <h3 class="home-page__tags-title">Eventos SPA renderizados por ESM</h3>
+
+            <ul class="home-page__tags" data-home-demo-target="tags"></ul>
+
+        </section>
+
+    </div>
+
+
+
+</div>
 
 </div>

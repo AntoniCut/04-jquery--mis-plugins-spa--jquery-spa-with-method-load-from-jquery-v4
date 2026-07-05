@@ -45,7 +45,7 @@ export const routeHtmlPage = {
         scripts: [
             { src: `${scripts}/tooltips.js` },
             { src: `${scripts}/pages/stack/html-page.cjs.js` },
-            { src: `${scripts}/pages/stack/html-page.esm.js`, type: 'module' },
+            { src: `${scripts}/pages/stack/html-page.esm.js`, type: 'module', exportFunctionName: 'mount' },
         ],
         libs: [
             { name: 'tooltip' },

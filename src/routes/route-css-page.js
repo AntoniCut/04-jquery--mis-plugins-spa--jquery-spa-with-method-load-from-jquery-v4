@@ -35,6 +35,7 @@ export const routeCssPage = {
             "#btnNavbarThemesJQueryUI": btnNavbarThemesJQueryUI,
             "#layoutNavbar": layoutNavbar,
             "#layoutNavbarThemesUI": layoutNavbarThemesUI,
+            
             "#layoutMain": `${pages}/stack/css/css-page.html`,
             "#layoutFooter": layoutFooter,
         },
@@ -45,7 +46,7 @@ export const routeCssPage = {
         scripts: [
             { src: `${scripts}/tooltips.js` },
             { src: `${scripts}/pages/stack/css-page.cjs.js` },
-            { src: `${scripts}/pages/stack/css-page.esm.js`, type: 'module' },
+            { src: `${scripts}/pages/stack/css-page.esm.js`, type: 'module', exportFunctionName: 'mount' },
         ],
         libs: [
             { name: 'tooltip' },

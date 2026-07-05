@@ -44,6 +44,8 @@ export const routeHome = {
         ],
         scripts: [
             { src: `${scripts}/tooltips.js` },
+            { src: `${scripts}/pages/home.cjs.js` },
+            { src: `${scripts}/pages/home.esm.js`, type: 'module', exportFunctionName: 'mount' },
         ],
         libs: [
             { name: 'tooltip' },
