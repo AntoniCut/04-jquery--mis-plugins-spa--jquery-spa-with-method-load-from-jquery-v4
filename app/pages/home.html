@@ -33,7 +33,7 @@
             <p class="home-page__intro-text">
                 La <strong>versión 4</strong> extiende el motor SPA con lazy loading de módulos de ruta mediante
                 <code>import()</code>, integración con <strong>jQuery UI</strong> (draggable, tooltip, themes),
-                soporte nativo para la <strong>View Transitions API</strong>, <strong>Markdown Shiki</strong>,
+                soporte nativo para la <strong>View Transitions API</strong>,
                 reescritura automática de URLs en HTML inyectado, metadatos dinámicos por ruta, navegación con
                 <strong>History API</strong>, caché de módulos, eventos personalizados y manejo robusto de errores
                 para desacoplar el loader visual de la lógica de navegación.
@@ -103,17 +103,6 @@
                 </article>
 
                 <article class="home-page__feature">
-                    <span class="home-page__feature-icon" aria-hidden="true">📄</span>
-                    <h4 class="home-page__feature-title">Page Components (<code>pagesComponents</code>)</h4>
-                    <p class="home-page__feature-text">
-                        Además del layout, cada ruta puede declarar un array <code>pagesComponents</code> con entradas
-                        <code>&#123; url, target &#125;</code>. Inyecta HTML en contenedores de la propia vista
-                        (p. ej. <code>[data-component-page="home"]</code>) reutilizando el mismo mecanismo
-                        <code>.load()</code> y la reescritura de URLs.
-                    </p>
-                </article>
-
-                <article class="home-page__feature">
                     <span class="home-page__feature-icon" aria-hidden="true">🎨</span>
                     <h4 class="home-page__feature-title">CSS y JS por Ruta</h4>
                     <p class="home-page__feature-text">
@@ -134,19 +123,6 @@
                         importaciones redundantes. El plugin emite eventos <code>spa:route-loaded</code>,
                         <code>spa:first-route-loaded</code> y <code>spa:route-load-error</code> para
                         desacoplar el loader visual de la navegación SPA.
-                    </p>
-                </article>
-
-                <article class="home-page__feature">
-                    <span class="home-page__feature-icon" aria-hidden="true">✨</span>
-                    <h4 class="home-page__feature-title">Markdown Shiki</h4>
-                    <p class="home-page__feature-text">
-                        Cada ruta puede declarar un array <code>MarkdownShikiHtml</code> con entradas
-                        <code>&#123; url, target &#125;</code>. Tras cargar la vista, el plugin hace
-                        <code>fetch()</code> de los bloques HTML generados con
-                        <strong>Shiki</strong> y los inyecta en contenedores
-                        <code>[data-shiki="..."]</code>. Regenera el resaltado con
-                        <code>pnpm code-highlight</code>.
                     </p>
                 </article>
 
@@ -359,12 +335,8 @@
                 <li class="home-page__tag">path</li>
                 <li class="home-page__tag">file</li>
                 <li class="home-page__tag">components</li>
-                <li class="home-page__tag">pagesComponents[ ]</li>
                 <li class="home-page__tag">libs[ ]</li>
-                <li class="home-page__tag">MarkdownShikiHtml[ ]</li>
                 <li class="home-page__tag">url</li>
-                <li class="home-page__tag">target</li>
-                <li class="home-page__tag">data-shiki</li>
                 <li class="home-page__tag">data-id</li>
                 <li class="home-page__tag">data-route</li>
                 <li class="home-page__tag">routeFile</li>
@@ -402,7 +374,7 @@
                 <p class="home-page__intro-text">
                     El proyecto separa el código fuente (<code>src/</code>) del artefacto servible
                     (<code>app/</code>) y del build de producción minificado (<code>dist/</code>).
-                    <strong>Gulp</strong> orquesta la copia, compilación SCSS, generación Shiki y
+                    <strong>Gulp</strong> orquesta la copia, compilación SCSS y
                     minificación; los servidores Express añaden fallback SPA, live reload y
                     soporte PHP en desarrollo.
                 </p>
@@ -421,24 +393,12 @@
                 </article>
 
                 <article class="home-page__feature">
-                    <span class="home-page__feature-icon" aria-hidden="true">🖍️</span>
-                    <h4 class="home-page__feature-title">generate-markdown-shiki</h4>
-                    <p class="home-page__feature-text">
-                        Tras compilar estilos, <code>generateShiki</code> lee las rutas del SPA,
-                        deduce los archivos fuente por convención de nombres (<code>-html</code>,
-                        <code>-css</code>, <code>-scss</code>, <code>-js</code>) y genera bloques
-                        HTML resaltados con Shiki (tema <code>dark-plus</code>) en
-                        <code>app/markdown-shiki/</code>.
-                    </p>
-                </article>
-
-                <article class="home-page__feature">
                     <span class="home-page__feature-icon" aria-hidden="true">👀</span>
                     <h4 class="home-page__feature-title">Watch en Tiempo Real</h4>
                     <p class="home-page__feature-text">
                         <code>gulp dev</code> ejecuta <code>copyAll</code> y observa cambios en
-                        <code>src/</code>. Al modificar SCSS, recompila estilos, regenera Shiki y
-                        sincroniza markdown-shiki. Soporta polling vía
+                        <code>src/</code>. Al modificar SCSS, recompila estilos y copia los
+                        cambios a <code>app/</code>. Soporta polling vía
                         <code>CHOKIDAR_USEPOLLING</code> para entornos Linux con límites de inotify.
                     </p>
                 </article>
@@ -493,7 +453,6 @@
                 <li class="home-page__tag">pnpm stop:dev</li>
                 <li class="home-page__tag">pnpm build</li>
                 <li class="home-page__tag">pnpm preview</li>
-                <li class="home-page__tag">pnpm code-highlight</li>
             </ul>
 
         </section>
@@ -521,8 +480,8 @@
         <section class="home-page__intro">
             <p class="home-page__intro-text">
                 Esta sección forma parte de la vista cargada en <strong>layoutMain</strong>. Los scripts
-                de la ruta se ejecutan con <strong>applyRouteMeta</strong> del plugin
-                <strong>spa-loader-content-html v3</strong>, cuando el DOM de la página ya está disponible.
+                de la ruta se ejecutan con <strong>applyRouteMeta</strong> del propio plugin
+                (<strong>spa-with-method-load-from-jquery v4</strong>), cuando el DOM de la página ya está disponible.
             </p>
         </section>
 

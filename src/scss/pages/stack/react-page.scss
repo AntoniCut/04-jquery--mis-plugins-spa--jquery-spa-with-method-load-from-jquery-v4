@@ -43,6 +43,7 @@ $shadow-hero-title:      0 2px 8px rgba(0, 0, 0, 0.35);
 .react-demo {
 
     width: 100%;
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
