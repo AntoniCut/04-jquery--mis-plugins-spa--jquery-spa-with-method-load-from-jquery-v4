@@ -12,8 +12,6 @@
 /** @typedef {import('../../../../types/index.js').RouteStyle} RouteStyle */
 /** @typedef {import('../../../../types/index.js').RouteLib} RouteLib */
 /** @typedef {import('../../../../types/index.js').Route} Route */
-/** @typedef {import('../../../../types/index.js').MarkdownShikiEntry} MarkdownShikiEntry */
-/** @typedef {import('../../../../types/index.js').PageComponentEntry} PageComponentEntry */
 
 
 /**
@@ -37,7 +35,6 @@
  *     - Notificación de carga de ruta mediante eventos personalizados (`spa:route-loaded`, `spa:first-route-loaded`, `spa:route-load-error`).
  *     - Manejo de errores en la carga de componentes y rutas.
  *     - Soporte para scripts clásicos y módulos ES6 (type="module").
- *     - Markdown con Shiki para código fuente resaltado.
  *     - Reescritura de URLs en HTML inyectado para evitar roturas en la SPA.
  *     - Funciones auxiliares para manejo de rutas, módulos y metadatos.
  */
@@ -99,7 +96,6 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
 
             /** @type {Map<string, Route>} - `Cache de módulos de ruta cargados con import()` */
             const routeCache = new Map();
-
 
 
             /*
@@ -201,7 +197,6 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                 return s;
 
             }
-
 
 
             /**
@@ -411,7 +406,6 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
             };
 
 
-
             /*
                 *  ---------------------------------------------------------------  *
                 *  -----  Carga de contenido dinámico, Componentes del DOM   -----  *
@@ -502,11 +496,8 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                             console.warn(`La ruta ${route.id} no contiene 'components'`);
                             console.log('\n');
 
-                            //  -----  Aplicar metadatos antes que pagesComponents (paridad con spa-loader-content-html)  -----
+                            //  -----  Aplicar metadatos antes de terminar  -----
                             await applyRouteMeta(route, source);
-
-                            //  -----  Renderizar componentes de página (pagesComponents) aunque la ruta no defina 'components'  -----
-                            await renderPageComponents(route);
 
                             return;
 
@@ -544,11 +535,8 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                             //  -----  Habilitar elementos draggables tras cargar el DOM y las libs  -----
                             enableDraggables();
 
-                            //  -----  Aplicar metadatos de la ruta (título, favicon, css, shiki, scripts, URL)  -----
+                            //  -----  Aplicar metadatos de la ruta (título, favicon, css, scripts, URL)  -----
                             await applyRouteMeta(route, source);
-
-                            //  -----  Renderizar componentes de página (pagesComponents) dentro de la vista ya cargada  -----
-                            await renderPageComponents(route);
 
                         } catch (err) {
 
@@ -636,7 +624,6 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                 });
 
             };
-
 
 
             /*
@@ -757,7 +744,6 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
             };
 
 
-
             /**
              * ---------------------------------------------
              * -----  `loadComponentsDom(components)`  -----
@@ -844,108 +830,6 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
             };
 
 
-
-            /**
-             * -------------------------------------------
-             * -----  `renderMarkdownShiki(route)`  -----
-             * -------------------------------------------
-             * - Carga los archivos HTML generados con Shiki y los inyecta en los contenedores del DOM.
-             * - Cada entrada debe ser un objeto `{ url, target }` donde `target` es un selector CSS
-             *   del contenedor (p.ej. `'[data-shiki="codeJs"]'`, `'[data-shiki="codeJs-2"]'`).
-             * @async
-             * @param {Route} route
-             * @returns {Promise<void>}
-             */
-            const renderMarkdownShiki = async (route) => {
-
-                if (!route.MarkdownShikiHtml || !Array.isArray(route.MarkdownShikiHtml)) return;
-
-                for (const entry of route.MarkdownShikiHtml) {
-
-                    /** @type {MarkdownShikiEntry} */
-                    const { url, target } = entry;
-
-                    if (!url || !target) continue;
-
-                    try {
-
-                        const html = await fetch(url).then(r => r.text());
-
-                        /** @type {HTMLElement|null} */
-                        const container = document.querySelector(target);
-
-                        if (!container) {
-                            console.warn(`⚠️ renderMarkdownShiki: No se encontró contenedor para: ${url}`);
-                            continue;
-                        }
-
-                        container.innerHTML = html;
-
-                    } catch (error) {
-                        console.error(`❌ renderMarkdownShiki: Error cargando: ${url}`, error);
-                    }
-                }
-
-            };
-
-
-            /**
-             * -----------------------------------------------
-             * -----  `renderPageComponents(route)`  ----------
-             * -----------------------------------------------
-             * @async
-             * - Renderiza componentes HTML dentro de la propia vista (no del layout).
-             * - Cada entrada de `route.pagesComponents` es un objeto `{ url, target }`
-             *   donde `target` es un selector CSS del contenedor destino
-             *   (p.ej. `'[data-component-page="htmlPage"]'`).
-             * - Delega la inyección en `loadComponentsDom` para mantener el mismo
-             *   comportamiento que los componentes del layout (visibilidad, inyección,
-             *   reescritura de URLs y manejo de errores).
-             * - Permite renderizar más de un componente por página (array de entradas).
-             * @param {Route} route - Ruta de la cual cargar los componentes de página.
-             * @returns {Promise<void>} - Promesa que se resuelve cuando todos los
-             *   componentes de página se han renderizado (o se han omitido/amañado errores).
-             */
-            const renderPageComponents = async (route) => {
-
-                //  -----  Validación (caso válido: la mayoría de rutas no definen pagesComponents)  -----
-                if (!route.pagesComponents || !Array.isArray(route.pagesComponents))
-                    return;
-
-                //  -----  Construir un objeto { selector: url } para reutilizar loadComponentsDom  -----
-                /** @type {Record<string, string>} */
-                const componentsMap = {};
-
-                //  -----  Iterar sobre cada entrada de pagesComponents  -----
-                for (const entry of route.pagesComponents) {
-
-                    /** @type {string|undefined} - URL del componente de página */
-                    const url = entry?.url;
-
-                    /** @type {string|undefined} - Selector CSS del contenedor destino */
-                    const target = entry?.target;
-
-                    //  -----  Validación de la entrada: debe tener url y target  -----
-                    if (!url || !target) {
-                        console.warn('⚠️ Entrada pagesComponents incompleta (falta url o target). Se omite.');
-                        continue;
-                    }
-
-                    //  -----  Acumular en el mapa selector -> url  -----
-                    componentsMap[target] = url;
-
-                }
-
-                //  -----  Si no hay entradas válidas, salir sin hacer nada  -----
-                if (Object.keys(componentsMap).length === 0)
-                    return;
-
-                //  -----  Cargar todos los componentes de página usando el mismo mecanismo que el layout  -----
-                await loadComponentsDom(componentsMap);
-
-            };
-
-
             /**
              * -------------------------------------
              * -----  `applyRouteMeta(route)`  -----
@@ -976,9 +860,6 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                 //  -----  CSS  -----
                 if (route.styles)
                     loadStylesheetByPage(route.styles);
-
-                //  -----  Markdown Shiki  -----
-                await renderMarkdownShiki(route);
 
                 //  -----  JS  -----
                 if (route.scripts)
@@ -1012,7 +893,6 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                 };
 
 
-
                 //  -----  En 'init' y 'popstate' NO empujamos historial:  -----
                 //  -----  'init'     lo gestiona externamente con replaceState       -----
                 //  -----  'popstate' ya viene actualizado por el navegador            -----
@@ -1042,7 +922,6 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
             }
 
 
-
             /**
              * -------------------------------------------
              * -----  `addTitleHeaderFooter(title)`  -----
@@ -1062,7 +941,6 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                 $('#layoutFooter #footerTitle').html(title);
 
             }
-
 
 
             /*
@@ -1109,7 +987,6 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                 }
 
             };
-
 
 
             /**
@@ -1335,7 +1212,6 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
             };
 
 
-
             /**
              * --------------------------------------
              * -----  `changeThemesJQueryUI()`  -----
@@ -1414,7 +1290,6 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
             }
 
 
-
             /**
              * --------------------------------------
              * -----  `updateFavicon(favicon)`  -----
@@ -1467,7 +1342,6 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                     $favicon.attr('href', favicon);
 
             };
-
 
 
             /*
@@ -1560,7 +1434,6 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
             };
 
 
-
             /*
                 *  ---------------------  *
                 *  -----  SCRIPTS  -----  *
@@ -1619,7 +1492,6 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
             };
 
 
-
             /**
              * ---------------------------------------
              * -----  `loadScripts(scriptUrl)`  ------
@@ -1636,7 +1508,7 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                 const scriptUrl = String(scriptOptions?.src || '');
 
                 /** @type {'classic'|'module'} - `Tipo de carga del script` */
-                const scriptType = (scriptOptions?.type === 'module' || scriptOptions?.isModule) ? 'module' : 'classic';
+                const scriptType = (scriptOptions?.type === 'module') ? 'module' : 'classic';
 
                 /** @type {string|null} - `Export opcional del módulo a ejecutar tras la carga` */
                 const exportFunctionName = scriptOptions?.exportFunctionName || null;
@@ -1747,7 +1619,6 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
             };
 
 
-
             /**
              * -------------------------------------
              * -----  `loadLibsByRoute(libs)`  -----
@@ -1852,7 +1723,6 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
             };
 
 
-
             /*
                 *  ---------------------  *
                 *  -----  EVENTOS  -----  *
@@ -1936,7 +1806,6 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
             });
 
 
-
             /*
                 ---------------------------------------------------
                 -----  Manejadores de navegación - popstate  -----
@@ -2010,7 +1879,6 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                     await loadNotFoundRoute('popstate');
 
             });
-
 
 
             /*
