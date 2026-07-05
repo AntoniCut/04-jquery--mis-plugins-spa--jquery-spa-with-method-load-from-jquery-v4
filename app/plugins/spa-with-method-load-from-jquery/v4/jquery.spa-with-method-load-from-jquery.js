@@ -526,15 +526,15 @@ export const spaWithMethodLoadFromJQueryPlugins = () => {
                                 console.warn('actionsNavbar falló (probablemente falta .navbar__container en la vista):', err);
                             }
 
-                            //  -----  Cambio de themes jQuery UI  -----
+                            //  -----  Cargar libs de jQuery UI bajo demanda para esta ruta (incluye widget tooltip) -----
+                            await loadLibsByRoute(route.libs);
+
+                            //  -----  Cambio de themes jQuery UI (requiere tooltip de jQuery UI ya cargado) -----
                             try {
                                 changeThemesJQueryUI();
                             } catch (err) {
                                 console.warn('changeThemesJQueryUI falló:', err);
                             }
-
-                            //  -----  Cargar libs de jQuery UI bajo demanda para esta ruta  -----
-                            await loadLibsByRoute(route.libs);
 
                             //  -----  Habilitar elementos draggables tras cargar el DOM y las libs  -----
                             enableDraggables();
